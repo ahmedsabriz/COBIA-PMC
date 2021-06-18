@@ -1,3 +1,11 @@
+/*
+Implementation of Collection Common Interface for the developed unit:
+"The ICapeCollection interface provides a means of collecting together
+lists of CAPE-OPEN items/entities (eg. parameters, ports, …)."
+This collection is of "CapeUnitPort" type. It can be converted
+to a template that takes other types of entities.
+*/
+
 #pragma once
 #include <COBIA.h>
 #include <vector>
@@ -25,7 +33,7 @@ public:
 	~PortCollection() {
 	}
 
-	// Method to adding port to the collection
+	// Method to adding ports to the collection
 	void addPort(CAPEOPEN_1_2::CapeUnitPort port) {
 		ports.emplace_back(port);
 	}
@@ -62,14 +70,19 @@ public:
 
 	// Lookup by name
 	CAPEOPEN_1_2::CapeUnitPort Item(/*in*/ CapeString name) {
-		CapeStringImpl subjectPortName;
-		for (CAPEOPEN_1_2::CapeUnitPort& portIterator : ports) {
-			CAPEOPEN_1_2::CapeIdentification portIdentification(portIterator);
-			portIdentification.getComponentName(subjectPortName);
-			if (subjectPortName == name) return portIterator;
+		CapeString portName;
+		for (CAPEOPEN_1_2::CapeUnitPort& portPtr : ports) {
+			CAPEOPEN_1_2::CapeIdentification portIdentification(portPtr);
+			portIdentification.getComponentName(portName);
+			if (portName == name)
+			{
+				return portPtr;
+			}
 		}
-		throw cape_open_error(COBIAERR_NoSuchItem); // If not found
+		// If not found (no return)
+		throw cape_open_error(COBIAERR_NoSuchItem);
 	}
+
 	CapeInteger getCount() {
 		return (CapeInteger)ports.size();
 	}

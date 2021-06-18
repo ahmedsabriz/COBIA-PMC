@@ -10,11 +10,12 @@ class MaterialPort :
 
 	// Members
 	CapeStringImpl& unitName;
-	CAPEOPEN_1_2::CapeValidationStatus unitValidationStatus;
-	CAPEOPEN_1_2::CapePortDirection direction;
 	CapeStringImpl portName;
 
+	CAPEOPEN_1_2::CapePortDirection direction;
 	CAPEOPEN_1_2::CapeThermoMaterial connectedMaterial;
+
+	CAPEOPEN_1_2::CapeValidationStatus unitValidationStatus;
 
 public:
 
@@ -22,14 +23,10 @@ public:
 		return portName + COBIATEXT(" port of ") + unitName;
 	}
 
-	MaterialPort(CapeStringImpl& _unitName,
-		CAPEOPEN_1_2::CapeValidationStatus& _unitValidationStatus,
-		CAPEOPEN_1_2::CapePortDirection _direction,
-		const COBIACHAR* _portName) : // Another type may be applicable
-		unitName(_unitName),
-		unitValidationStatus(_unitValidationStatus),
-		direction(_direction),
-		portName(_portName) {
+	MaterialPort(const COBIACHAR* _portName, CAPEOPEN_1_2::CapePortDirection _direction,
+		CapeStringImpl& _unitName, CAPEOPEN_1_2::CapeValidationStatus& _unitValidationStatus) :
+		portName(_portName), direction(_direction),
+		unitName(_unitName), unitValidationStatus(_unitValidationStatus) {
 	}
 
 	~MaterialPort() {
@@ -81,7 +78,7 @@ public:
 		return connectedMaterial;
 	}
 
-	// This method is not part of any interface
+	// ICapeThermoMaterial
 	CAPEOPEN_1_2::CapeThermoMaterial getMaterial() {
 		return connectedMaterial;
 	}
