@@ -55,7 +55,7 @@ public:
 		registrar.putName(COBIATEXT("CO Splitter"));
 		registrar.putDescription(COBIATEXT("Description"));
 		registrar.putCapeVersion(COBIATEXT("1.1"));
-		registrar.putComponentVersion(COBIATEXT("0.2.0.0"));
+		registrar.putComponentVersion(COBIATEXT("0.2.0.1"));
 		registrar.putAbout(COBIATEXT("About Unit"));
 		registrar.putVendorURL(COBIATEXT("www.polimi.it"));
 		registrar.putProgId(COBIATEXT("Polimi.Unit"));
@@ -70,7 +70,7 @@ public:
 		product1(new MaterialPort(COBIATEXT("Product 1"), CAPEOPEN_1_2::CAPE_OUTLET, name, validationStatus)),
 		product2(new MaterialPort(COBIATEXT("Product 2"), CAPEOPEN_1_2::CAPE_OUTLET, name, validationStatus)),
 		portCollection(new PortCollection(name)), 
-		splitRatio(new RealParameter(name, COBIATEXT("Split Ratio"), 0.5, 0, 1, validationStatus, dirty)),
+		splitRatio(new RealParameter(name, COBIATEXT("Split Ratio"), 0.5, 0.0, 1.0, validationStatus, dirty)),
 		paramCollection(new ParameterCollection(name)), 
 		validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED),
 		dirty(false) {
@@ -94,6 +94,12 @@ public:
 	}
 
 	~Unit() {
+		delete(paramCollection);
+		delete(splitRatio);
+		delete(portCollection);
+		delete(product1);
+		delete(product2);
+		delete(feed);
 	}
 
 	// CAPEOPEN_1_2::ICapeIdentification
