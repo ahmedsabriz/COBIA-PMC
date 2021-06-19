@@ -71,7 +71,7 @@ public:
 		CapeBoolean val = true;
 		if (this->getValue() < lowerBound || this->getValue() > upperBound) {
 			message = L"Value is out of bound";
-			val == false;
+			val = false;
 		}
 		unitValidationStatus = (val) ? CAPEOPEN_1_2::CAPE_VALID : CAPEOPEN_1_2::CAPE_INVALID;
 		return val;
@@ -126,7 +126,7 @@ public:
 	CapeBoolean Validate(/*in*/ CapeReal value,/*out*/ CapeString message) {
 		CapeBoolean val = true;
 		if (value < lowerBound || value > upperBound) {
-			val == false;
+			val = false;
 			message = L"Value is out of bound";
 		}
 		unitValidationStatus = (val) ? CAPEOPEN_1_2::CAPE_VALID : CAPEOPEN_1_2::CAPE_INVALID;
