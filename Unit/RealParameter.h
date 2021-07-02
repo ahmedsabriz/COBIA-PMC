@@ -16,6 +16,8 @@ class RealParameter :
 	CapeStringImpl paramName;
 	CapeReal value, defaultValue, upperBound, lowerBound;
 	CapeReal dimensionality[9] = { 0, 0, 0, 0, 0, 0, 0, 0 ,0 };
+	CAPEOPEN_1_2::CapeParamMode paramMode;
+	CAPEOPEN_1_2::CapeValidationStatus paramValidationStatus;
 	CAPEOPEN_1_2::CapeValidationStatus& unitValidationStatus;
 	CapeBoolean& dirty;
 
@@ -26,10 +28,12 @@ public:
 
 	RealParameter(CapeStringImpl& _unitName, const COBIACHAR* _paramName,
 		CapeReal _defaultValue, CapeReal _lowerBound, CapeReal upperBound,
+		CAPEOPEN_1_2::CapeParamMode _paramMode,
 		CAPEOPEN_1_2::CapeValidationStatus& _unitValidationStatus, CapeBoolean& _dirty) :
 		unitName(_unitName), paramName(_paramName), value (_defaultValue),
 		defaultValue(_defaultValue), lowerBound(_lowerBound), upperBound(upperBound),
-		unitValidationStatus(_unitValidationStatus), dirty(_dirty) {
+		paramMode(_paramMode), unitValidationStatus(_unitValidationStatus), dirty(_dirty),
+		paramValidationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED) {
 	}
 
 	~RealParameter() {
@@ -52,15 +56,15 @@ public:
 	void putComponentDescription(/*in*/ CapeString desc) {
 		throw cape_open_error(COBIAERR_Denied);
 	}
-	
+
 	//CAPEOPEN_1_2::ICapeParameter
 	
 	CAPEOPEN_1_2::CapeValidationStatus getValStatus() {
-		return unitValidationStatus;
+		return paramValidationStatus;
 	}
 	
 	CAPEOPEN_1_2::CapeParamMode getMode() {
-		return CAPEOPEN_1_2::CAPE_INPUT;
+		return paramMode;
 	}
 	
 	CAPEOPEN_1_2::CapeParamType getType() {
@@ -69,11 +73,12 @@ public:
 
 	CapeBoolean Validate(/*out*/ CapeString message) {
 		CapeBoolean val = true;
-		if (this->getValue() < lowerBound || this->getValue() > upperBound) {
-			message = L"Value is out of bound";
+
+		if (getType() != CAPEOPEN_1_2::CAPE_PARAMETER_REAL || getMode() != paramMode) {
 			val = false;
+			message = COBIATEXT("Parameter does not meet specifications");
+			throw cape_open_error(COBIAERR_UnknownError);
 		}
-		unitValidationStatus = (val) ? CAPEOPEN_1_2::CAPE_VALID : CAPEOPEN_1_2::CAPE_INVALID;
 		return val;
 	}
 
@@ -88,6 +93,7 @@ public:
 	}
 	
 	void putValue(/*in*/ CapeReal value) {
+		paramValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 		this->value = value;
 		dirty = true;
@@ -127,11 +133,12 @@ public:
 		CapeBoolean val = true;
 		if (value < lowerBound || value > upperBound) {
 			val = false;
-			message = L"Value is out of bound";
+			message = COBIATEXT("Parameter Value is out of bound");
+			throw cape_open_error(COBIAERR_InvalidArgument);
 		}
-		unitValidationStatus = (val) ? CAPEOPEN_1_2::CAPE_VALID : CAPEOPEN_1_2::CAPE_INVALID;
+		paramValidationStatus = (val) ? CAPEOPEN_1_2::CAPE_VALID : CAPEOPEN_1_2::CAPE_INVALID;
 		return val;
-	}	
+	}
 };
 
 using RealParameterPtr = CapeOpenObjectSmartPointer<RealParameter>;

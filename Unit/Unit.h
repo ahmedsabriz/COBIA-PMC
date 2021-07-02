@@ -5,6 +5,19 @@
 #include "RealParameter.h"
 #include "ParameterCollection.h"
 
+#define projectVersion COBIATEXT("0.2.2.0")
+#define unitDescription COBIATEXT("Simple Spliter using total flow ratio (mass/molar)")
+
+#ifdef _DEBUG
+#define unitName COBIATEXT("CO PMC Debug")
+// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A704A8
+#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x04,0xa8
+#else
+#define unitName COBIATEXT("CO PMC")
+// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A704FF
+#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x04,0xff
+#endif
+
 using namespace COBIA;
 
 class Unit :
@@ -40,44 +53,41 @@ class Unit :
 
 public:
 
+	// Returns a description of the current object for error handling
 	const CapeStringImpl getDescriptionForErrorSource() {
-		// Returns a description of the current object for error handling
-		return COBIATEXT("Unit: ") + *&name;
+		return COBIATEXT("Unit: ") + name;
 	}
 
 	// Registration info
 	static const CapeUUID getObjectUUID() {
-		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A704A8
-		return CapeUUID{{0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x04,0xa8}};
+		return CapeUUID{unitUUID};
 	}
 
 	static void Register(CapePMCRegistrar registrar) {
-		registrar.putName(COBIATEXT("CO Splitter"));
-		registrar.putDescription(COBIATEXT("Description"));
+		registrar.putName(unitName);
+		registrar.putDescription(unitDescription);
 		registrar.putCapeVersion(COBIATEXT("1.1"));
-		registrar.putComponentVersion(COBIATEXT("0.2.0.1"));
-		registrar.putAbout(COBIATEXT("About Unit"));
+		registrar.putComponentVersion(projectVersion);
+		registrar.putAbout(COBIATEXT("Sample Unit Operation using COBIA."));
 		registrar.putVendorURL(COBIATEXT("www.polimi.it"));
-		registrar.putProgId(COBIATEXT("Polimi.Unit"));
+		// registrar.putProgId(COBIATEXT("Polimi.Unit"));
 		registrar.addCatID(CAPEOPEN::categoryId_UnitOperation);
 		registrar.addCatID(CAPEOPEN_1_2::categoryId_Component_1_2);
 		//registrar.putCreationFlags(CapePMCRegistationFlag_None);
 	}
 
 	Unit()  :
-		name(COBIATEXT("CO Splitter")), description(COBIATEXT("Description")),
+		name(unitName),	description(unitDescription), validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED),
 		feed(new MaterialPort(COBIATEXT("Feed"), CAPEOPEN_1_2::CAPE_INLET, name, validationStatus)),
 		product1(new MaterialPort(COBIATEXT("Product 1"), CAPEOPEN_1_2::CAPE_OUTLET, name, validationStatus)),
 		product2(new MaterialPort(COBIATEXT("Product 2"), CAPEOPEN_1_2::CAPE_OUTLET, name, validationStatus)),
-		portCollection(new PortCollection(name)), 
-		splitRatio(new RealParameter(name, COBIATEXT("Split Ratio"), 0.5, 0.0, 1.0, validationStatus, dirty)),
-		paramCollection(new ParameterCollection(name)), 
-		validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED),
-		dirty(false) {
+		splitRatio(new RealParameter(name, COBIATEXT("Split Ratio"), 0.5, 0.0, 1.0,
+			CAPEOPEN_1_2::CAPE_INPUT, validationStatus, dirty)), dirty(false),
+		portCollection(new PortCollection(name)), paramCollection(new ParameterCollection(name)) {
 
 		// Set parameter dimensionality
 		splitRatio->putDimensionality(8, 1);
-
+		
 		// Add ports and parameters to collections
 		portCollection->addPort(feed);
 		portCollection->addPort(product1);
@@ -94,12 +104,6 @@ public:
 	}
 
 	~Unit() {
-		delete(paramCollection);
-		delete(splitRatio);
-		delete(portCollection);
-		delete(product1);
-		delete(product2);
-		delete(feed);
 	}
 
 	// CAPEOPEN_1_2::ICapeIdentification
@@ -152,8 +156,8 @@ public:
 			ConstCapeString(COBIATEXT("mole")), p1Flow);
 
 		p2Flow[0] = feedFlow[0] - p1Flow[0];
-		p1Material.SetOverallProp(ConstCapeString(COBIATEXT("totalFlow")),
-			ConstCapeString(COBIATEXT("mole")), p1Flow);
+		p2Material.SetOverallProp(ConstCapeString(COBIATEXT("totalFlow")),
+			ConstCapeString(COBIATEXT("mole")), p2Flow);
 
 		// Set product(s) T, P, X
 		T.resize(1);
@@ -189,6 +193,11 @@ public:
 
 	CapeBoolean Validate(/*out*/ CapeString message) {
 		CapeBoolean val = true;
+
+		// Validate ICapeParameterSpecification & ICapeRealParameterSpecification
+		if (splitRatio->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
+			val = splitRatio->Validate(message) && splitRatio->Validate(splitRatio->getValue(), message);
+		}
 
 		// Check whether all ports are connected, and connected to materials with equal compound lists
 		CapeArrayStringImpl refCompIDs, compIDs;
