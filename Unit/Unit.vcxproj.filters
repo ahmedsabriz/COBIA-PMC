@@ -34,5 +34,8 @@
     <ClInclude Include="RealParameter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="EnergyPort.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

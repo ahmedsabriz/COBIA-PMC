@@ -1,12 +1,13 @@
 #pragma once
 #include <COBIA.h>
 #include "MaterialPort.h"
+#include "EnergyPort.h"
 #include "PortCollection.h"
 #include "RealParameter.h"
 #include "ParameterCollection.h"
 
-#define projectVersion COBIATEXT("0.2.2.0")
-#define unitDescription COBIATEXT("Simple Spliter using total flow ratio (mass/molar)")
+#define projectVersion COBIATEXT("0.3.0")
+#define unitDescription COBIATEXT("Simple heater")
 
 #ifdef _DEBUG
 #define unitName COBIATEXT("CO PMC Debug")
@@ -31,21 +32,22 @@ class Unit :
 	CapeStringImpl name, description;
 
 	// Ports and Parameters
-	MaterialPortPtr feed, product1, product2;
-	RealParameterPtr splitRatio;
+	MaterialPortPtr feed1, product1;
+	EnergyPortPtr energy;
+	RealParameterPtr realParameter1;
 
 	// Collections
 	PortCollectionPtr portCollection;
 	ParameterCollectionPtr paramCollection;
 
-	// Material Properties
-	CapeArrayRealImpl feedFlow, p1Flow, p2Flow;
-	CapeArrayRealImpl T, P, X;
+	// ThermoMaterial Properties
+	CAPEOPEN_1_2::CapeThermoMaterial feed1Material, product1Material;
+	CapeArrayRealImpl feed1Flow, product1Flow, feed1Enthalpy, product1Enthalpy;
+	CapeArrayRealImpl feed1phaseFraction, product1phaseFraction, T, P, X;
 
-	// Thermo Properties
-	CapeArrayStringImpl flashCondT, flashCondP;
-	CapeArrayStringImpl flashPhaseIDs;
-	CapeArrayEnumerationImpl<CAPEOPEN_1_2::CapePhaseStatus> flashPhaseStatus;
+	// Flash Conditions
+	CapeArrayStringImpl flashCondT, flashCondP, product1PhaseIDs;
+	CapeArrayEnumerationImpl<CAPEOPEN_1_2::CapePhaseStatus> product1FlashPhaseStatus;
 
 	// Persistence and Validation
 	CapeBoolean dirty;
@@ -78,21 +80,21 @@ public:
 
 	Unit()  :
 		name(unitName),	description(unitDescription), validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED),
-		feed(new MaterialPort(COBIATEXT("Feed"), CAPEOPEN_1_2::CAPE_INLET, name, validationStatus)),
+		feed1(new MaterialPort(COBIATEXT("Feed 1"), CAPEOPEN_1_2::CAPE_INLET, name, validationStatus)),
 		product1(new MaterialPort(COBIATEXT("Product 1"), CAPEOPEN_1_2::CAPE_OUTLET, name, validationStatus)),
-		product2(new MaterialPort(COBIATEXT("Product 2"), CAPEOPEN_1_2::CAPE_OUTLET, name, validationStatus)),
-		splitRatio(new RealParameter(name, COBIATEXT("Split Ratio"), 0.5, 0.0, 1.0,
+		energy(new EnergyPort(COBIATEXT("Energy"), CAPEOPEN_1_2::CAPE_INLET, name, validationStatus)),
+		realParameter1(new RealParameter(name, COBIATEXT("Outlet Temperature"), 373.15, 273.15, 1273.15,
 			CAPEOPEN_1_2::CAPE_INPUT, validationStatus, dirty)), dirty(false),
 		portCollection(new PortCollection(name)), paramCollection(new ParameterCollection(name)) {
 
 		// Set parameter dimensionality
-		splitRatio->putDimensionality(8, 1);
+		realParameter1->putDimensionality(4, 1); // K
 		
 		// Add ports and parameters to collections
-		portCollection->addPort(feed);
+		portCollection->addPort(feed1);
 		portCollection->addPort(product1);
-		portCollection->addPort(product2);
-		paramCollection->addParameter(splitRatio);
+		portCollection->addPort(energy);
+		paramCollection->addParameter(realParameter1);
 		
 		// Prepare T & P flash conditions for product flash
 		flashCondT.resize(3);
@@ -139,64 +141,108 @@ public:
 			throw cape_open_error(COBIATEXT("Unit is not in a valid state"));
 		}
 
-		// Implement ICapeThermoMaterial Interface
-		CAPEOPEN_1_2::CapeThermoMaterial feedMaterial = feed->getMaterial();
-		CAPEOPEN_1_2::CapeThermoMaterial p1Material = product1->getMaterial();
-		CAPEOPEN_1_2::CapeThermoMaterial p2Material = product2->getMaterial();
+		// Implement ICapeThermoMaterial Interface for feed(s)
+		// Implementation for product(s) is done previously in validation method
+		feed1Material = feed1->getMaterial();
 		
-		// Set product(s) flowrate
-		feedMaterial.GetOverallProp(ConstCapeString(COBIATEXT("totalFlow")),
-			ConstCapeString(COBIATEXT("mole")), feedFlow);
-
-		p1Flow.resize(1);
-		p2Flow.resize(1);
-
-		p1Flow[0] = feedFlow[0] * splitRatio->getValue();
-		p1Material.SetOverallProp(ConstCapeString(COBIATEXT("totalFlow")),
-			ConstCapeString(COBIATEXT("mole")), p1Flow);
-
-		p2Flow[0] = feedFlow[0] - p1Flow[0];
-		p2Material.SetOverallProp(ConstCapeString(COBIATEXT("totalFlow")),
-			ConstCapeString(COBIATEXT("mole")), p2Flow);
-
-		// Set product(s) T, P, X
+		// Get feed(s) overall props.
+		feed1Material.GetOverallProp(ConstCapeString(COBIATEXT("totalFlow")),
+			ConstCapeString(COBIATEXT("mole")), feed1Flow);
 		T.resize(1);
 		P.resize(1);
-		feedMaterial.GetOverallTPFraction(T[0], P[0], X);
+		feed1Material.GetOverallTPFraction(T[0], P[0], X);
 
-		p1Material.SetOverallProp(ConstCapeString(COBIATEXT("fraction")),
+		// Material Balance
+		product1Flow.resize(feed1Flow.size());
+		product1Flow[0] = feed1Flow[0];
+
+		// Energy Balance // TODO: Pressure drop
+		T[0] = realParameter1->getValue();
+
+		// Set product(s) overall props.
+		product1Material.SetOverallProp(ConstCapeString(COBIATEXT("totalFlow")),
+			ConstCapeString(COBIATEXT("mole")), product1Flow);
+		product1Material.SetOverallProp(ConstCapeString(COBIATEXT("fraction")),
 			ConstCapeString(COBIATEXT("mole")), X);
-		p1Material.SetOverallProp(ConstCapeString(COBIATEXT("temperature")),
+		product1Material.SetOverallProp(ConstCapeString(COBIATEXT("temperature")),
 			ConstCapeEmptyString(), T);
-		p1Material.SetOverallProp(ConstCapeString(COBIATEXT("pressure")),
+		product1Material.SetOverallProp(ConstCapeString(COBIATEXT("pressure")),
 			ConstCapeEmptyString(), P);
-
-		p2Material.SetOverallProp(ConstCapeString(COBIATEXT("fraction")),
-			ConstCapeString(COBIATEXT("mole")), X);
-		p2Material.SetOverallProp(ConstCapeString(COBIATEXT("temperature")),
-			ConstCapeEmptyString(), T);
-		p2Material.SetOverallProp(ConstCapeString(COBIATEXT("pressure")),
-			ConstCapeEmptyString(), P);
-
 
 		// Allow all phases to take part in product flash
-		p1Material.SetPresentPhases(flashPhaseIDs, flashPhaseStatus);
-		p2Material.SetPresentPhases(flashPhaseIDs, flashPhaseStatus);
+		product1Material.SetPresentPhases(product1PhaseIDs, product1FlashPhaseStatus);
 
-		// Flash product at specified T & P
-		CAPEOPEN_1_2::CapeThermoEquilibriumRoutine p1Equilibrium(p1Material);
-		p1Equilibrium.CalcEquilibrium(flashCondT, flashCondP, ConstCapeEmptyString());
+		// Flash product(s) at specified T & P
+		CAPEOPEN_1_2::CapeThermoEquilibriumRoutine product1Equilibrium(product1Material);
+		product1Equilibrium.CalcEquilibrium(flashCondT, flashCondP, ConstCapeEmptyString());
 
-		CAPEOPEN_1_2::CapeThermoEquilibriumRoutine p2Equilibrium(p2Material);
-		p2Equilibrium.CalcEquilibrium(flashCondT, flashCondP, ConstCapeEmptyString());
+
+		// Enthalpy calculations
+		CapeArrayEnumerationImpl<CAPEOPEN_1_2::CapePhaseStatus> phaseStatus;
+		CapeArrayStringImpl phaseLabels, props;
+		props.resize(1);
+		props[0] = L"enthalpy";
+		CapeArrayRealImpl enthalpy, phaseFraction, phaseEnthalpy;
+
+		// Feed enthalpy
+		CAPEOPEN_1_2::CapeThermoPropertyRoutine feed1Routine(feed1Material);
+		feed1Material.GetPresentPhases(phaseLabels, phaseStatus);
+		feed1Enthalpy.resize(phaseLabels.size() + 1);
+		feed1phaseFraction.resize(phaseLabels.size());
+		phaseEnthalpy.resize(phaseLabels.size());
+		for (size_t i = 0; i < phaseLabels.size(); i++) {
+			feed1Routine.CalcSinglePhaseProp(props, phaseLabels[i]);
+			feed1Material.GetSinglePhaseProp(props[0], phaseLabels[i], 
+				ConstCapeString(COBIATEXT("mole")), enthalpy);
+			feed1Enthalpy[i] = enthalpy[0];
+			feed1Material.GetSinglePhaseProp(ConstCapeString(COBIATEXT("phaseFraction")), phaseLabels[i],
+				ConstCapeString(COBIATEXT("mole")), phaseFraction);
+			feed1phaseFraction[i] = phaseFraction[0];
+			phaseEnthalpy[i] = feed1Enthalpy[i] * feed1phaseFraction[i];
+		}
+		// Calculate feed overall enthalpy
+		feed1Enthalpy[phaseLabels.size()] = 0;
+		for (size_t i = 0; i < phaseLabels.size(); i++) {
+			feed1Enthalpy[phaseLabels.size()] += phaseEnthalpy[i];
+		}
+		phaseLabels.clear();
+		phaseStatus.clear();
+		phaseEnthalpy.clear();
+
+		// Product enthalpy
+		CAPEOPEN_1_2::CapeThermoPropertyRoutine product1Routine(product1Material);
+		product1Material.GetPresentPhases(phaseLabels, phaseStatus);
+		product1Enthalpy.resize(phaseLabels.size() + 1);
+		product1phaseFraction.resize(phaseLabels.size());
+		phaseEnthalpy.resize(phaseLabels.size());
+		for (size_t i = 0; i < phaseLabels.size(); i++) {
+			product1Routine.CalcSinglePhaseProp(props, phaseLabels[i]);
+			product1Material.GetSinglePhaseProp(props[0], phaseLabels[i],
+				ConstCapeString(COBIATEXT("mole")), enthalpy);
+			product1Enthalpy[i] = enthalpy[0];
+			product1Material.GetSinglePhaseProp(ConstCapeString(COBIATEXT("phaseFraction")), phaseLabels[i],
+				ConstCapeString(COBIATEXT("mole")), phaseFraction);
+			product1phaseFraction[i] = phaseFraction[0];
+			phaseEnthalpy[i] = product1Enthalpy[i] * product1phaseFraction[i];
+		}
+		// Calculate product overall enthalpy
+		product1Enthalpy[phaseLabels.size()] = 0;
+		for (size_t i = 0; i < phaseLabels.size(); i++) {
+			product1Enthalpy[phaseLabels.size()] += phaseEnthalpy[i];
+		}
+
+		CapeReal deltaH = product1Enthalpy[product1Enthalpy.size() - 1]
+			- feed1Enthalpy[feed1Enthalpy.size() - 1];
+		CapeReal work = deltaH * feed1Flow[0];
+		
 	}
 
 	CapeBoolean Validate(/*out*/ CapeString message) {
 		CapeBoolean val = true;
 
 		// Validate ICapeParameterSpecification & ICapeRealParameterSpecification
-		if (splitRatio->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
-			val = splitRatio->Validate(message) && splitRatio->Validate(splitRatio->getValue(), message);
+		if (realParameter1->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
+			val = realParameter1->Validate(message) && realParameter1->Validate(realParameter1->getValue(), message);
 		}
 
 		// Check whether all ports are connected, and connected to materials with equal compound lists
@@ -217,15 +263,17 @@ public:
 				break;
 			}
 
+			if (p.getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL) {
 			// Get compound list for feed and product
-			CAPEOPEN_1_2::CapeThermoCompounds materialCompounds(connectedObject);
-			if (refCompIDs.empty()) {
-				materialCompounds.GetCompoundList(refCompIDs, formulae, names,
-					boilTemps, molecularWeights, casNumbers);
-			}
-			else {
-				materialCompounds.GetCompoundList(compIDs, formulae, names,
-					boilTemps, molecularWeights, casNumbers);
+				CAPEOPEN_1_2::CapeThermoCompounds materialCompounds(connectedObject);
+				if (refCompIDs.empty()) {
+					materialCompounds.GetCompoundList(refCompIDs, formulae, names,
+						boilTemps, molecularWeights, casNumbers);
+				}
+				else {
+					materialCompounds.GetCompoundList(compIDs, formulae, names,
+						boilTemps, molecularWeights, casNumbers);
+				}
 			}
 		}
 		if (val) {
@@ -245,20 +293,18 @@ public:
 			}
 		}
 		if (val) {
-			// Implement ICapeThermoMaterial Interface
-			CAPEOPEN_1_2::CapeThermoMaterial p1Material = product1->getMaterial();
-
-			// Phase arrays are identical for product 1 and 2. No need obtain a duplicate
-			// CAPEOPEN_1_2::CapeThermoMaterial p2Material = product2->getMaterial();
 			
-			// Prepare the flash phase list for the product flash
+			// Prepare lists of supported phase label and phase status for product flash
 			// This remains constant between validations
-			CapeArrayStringImpl stateOfAggregation, keyCompounds;
 
-			CAPEOPEN_1_2::CapeThermoPhases materialPhases(p1Material);
-			materialPhases.GetPhaseList(flashPhaseIDs, stateOfAggregation, keyCompounds);
-			flashPhaseStatus.resize(flashPhaseIDs.size());
-			std::fill(flashPhaseStatus.begin(), flashPhaseStatus.end(), CAPEOPEN_1_2::CAPE_UNKNOWNPHASESTATUS);
+			product1Material = product1->getMaterial();
+			CAPEOPEN_1_2::CapeThermoPhases product1Phases(product1Material);
+
+			CapeArrayStringImpl stateOfAggregation, keyCompounds;		
+			product1Phases.GetPhaseList(product1PhaseIDs, stateOfAggregation, keyCompounds);
+
+			product1FlashPhaseStatus.resize(product1PhaseIDs.size());
+			std::fill(product1FlashPhaseStatus.begin(), product1FlashPhaseStatus.end(), CAPEOPEN_1_2::CAPE_UNKNOWNPHASESTATUS);
 		}
 
 		// Update validation status
@@ -308,7 +354,7 @@ public:
 	void Save(/*in*/ CAPEOPEN_1_2::CapePersistWriter writer,/*in*/ CapeBoolean clearDirty) {
 		writer.Add(ConstCapeString(COBIATEXT("name")), name);
 		writer.Add(ConstCapeString(COBIATEXT("description")), description);
-		writer.Add(ConstCapeString(COBIATEXT("Split Ratio")), splitRatio->getValue());
+		writer.Add(ConstCapeString(COBIATEXT("Split Ratio")), realParameter1->getValue());
 		if (clearDirty) {
 			dirty = false;
 		}
@@ -317,7 +363,7 @@ public:
 	void Load(/*in*/ CAPEOPEN_1_2::CapePersistReader reader) {
 		reader.GetString(ConstCapeString(COBIATEXT("name")), name);
 		reader.GetString(ConstCapeString(COBIATEXT("description")), description);
-		splitRatio->putValue(reader.GetReal(ConstCapeString(COBIATEXT("Split Ratio"))));
+		realParameter1->putValue(reader.GetReal(ConstCapeString(COBIATEXT("Split Ratio"))));
 	}
 	CapeBoolean getIsDirty() {
 		return dirty;
