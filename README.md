@@ -12,5 +12,5 @@ The current state of the unit emulates a simple heater with two parameters. _Out
 The results have been verified against conventional heater in COCO simulator except for the displayed value of work parameter in the energy stream:
 
 
-![image](https://user-images.githubusercontent.com/80135041/128592023-c75ba1d5-86fd-4869-a546-19fa4753e40d.png)
+![image](https://user-images.githubusercontent.com/80135041/128592421-c4feeee3-ecd5-4d9a-84a6-13a7a388feba.png)
 
