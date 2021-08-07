@@ -1,5 +1,6 @@
 #pragma once
 #include <COBIA.h>
+#include <math.h>
 #include "MaterialPort.h"
 #include "EnergyPort.h"
 #include "PortCollection.h"
@@ -34,7 +35,7 @@ class Unit :
 	// Ports and Parameters
 	MaterialPortPtr feed1, product1;
 	EnergyPortPtr energy;
-	RealParameterPtr realParameter1;
+	RealParameterPtr work, realParameter1, realParameter2;
 
 	// Collections
 	PortCollectionPtr portCollection;
@@ -79,22 +80,36 @@ public:
 	}
 
 	Unit()  :
-		name(unitName),	description(unitDescription), validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED),
+		name(unitName),	description(unitDescription),
+		validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED), dirty(false),
 		feed1(new MaterialPort(COBIATEXT("Feed 1"), CAPEOPEN_1_2::CAPE_INLET, name, validationStatus)),
 		product1(new MaterialPort(COBIATEXT("Product 1"), CAPEOPEN_1_2::CAPE_OUTLET, name, validationStatus)),
 		energy(new EnergyPort(COBIATEXT("Energy"), CAPEOPEN_1_2::CAPE_INLET, name, validationStatus)),
-		realParameter1(new RealParameter(name, COBIATEXT("Outlet Temperature"), 373.15, 273.15, 1273.15,
-			CAPEOPEN_1_2::CAPE_INPUT, validationStatus, dirty)), dirty(false),
+		realParameter1(new RealParameter(name, COBIATEXT("Outlet temperature"), 373.15, 73.15, 1273.15,
+			CAPEOPEN_1_2::CAPE_INPUT, validationStatus, dirty)),
+		realParameter2(new RealParameter(name, COBIATEXT("Heat duty"), 0, -(std::pow(2, 64)), std::pow(2, 64),
+			CAPEOPEN_1_2::CAPE_OUTPUT, validationStatus, dirty)),
+		work(new RealParameter(name, COBIATEXT("work"), 0, -(std::pow(2, 64)), std::pow(2, 64),
+			CAPEOPEN_1_2::CAPE_OUTPUT, validationStatus, dirty)),
 		portCollection(new PortCollection(name)), paramCollection(new ParameterCollection(name)) {
 
 		// Set parameter dimensionality
 		realParameter1->putDimensionality(4, 1); // K
+		realParameter2->putDimensionality(0, 2); // m
+		realParameter2->putDimensionality(1, 1); // kg
+		realParameter2->putDimensionality(2, -3); // s
+		work->putDimensionality(0, 2); // m
+		work->putDimensionality(1, 1); // kg
+		work->putDimensionality(2, -3); // s
 		
 		// Add ports and parameters to collections
 		portCollection->addPort(feed1);
 		portCollection->addPort(product1);
 		portCollection->addPort(energy);
+		energy->addParameter(work);
 		paramCollection->addParameter(realParameter1);
+		paramCollection->addParameter(realParameter2);
+
 		
 		// Prepare T & P flash conditions for product flash
 		flashCondT.resize(3);
@@ -231,18 +246,26 @@ public:
 			product1Enthalpy[phaseLabels.size()] += phaseEnthalpy[i];
 		}
 
-		CapeReal deltaH = product1Enthalpy[product1Enthalpy.size() - 1]
-			- feed1Enthalpy[feed1Enthalpy.size() - 1];
-		CapeReal work = deltaH * feed1Flow[0];
-		
+		realParameter2->putValue((product1Enthalpy[product1Enthalpy.size() - 1]
+			- feed1Enthalpy[feed1Enthalpy.size() - 1]) * feed1Flow[0]);
+		work->putValue(realParameter2->getValue());
 	}
 
 	CapeBoolean Validate(/*out*/ CapeString message) {
 		CapeBoolean val = true;
 
 		// Validate ICapeParameterSpecification & ICapeRealParameterSpecification
+		// TODO: Iterate over parameter collection instead
 		if (realParameter1->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
 			val = realParameter1->Validate(message) && realParameter1->Validate(realParameter1->getValue(), message);
+		}
+
+		if (realParameter2->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
+			val = realParameter2->Validate(message) && realParameter2->Validate(realParameter2->getValue(), message);
+		}
+
+		if (work->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
+			val = work->Validate(message) && work->Validate(work->getValue(), message);
 		}
 
 		// Check whether all ports are connected, and connected to materials with equal compound lists
@@ -354,7 +377,12 @@ public:
 	void Save(/*in*/ CAPEOPEN_1_2::CapePersistWriter writer,/*in*/ CapeBoolean clearDirty) {
 		writer.Add(ConstCapeString(COBIATEXT("name")), name);
 		writer.Add(ConstCapeString(COBIATEXT("description")), description);
-		writer.Add(ConstCapeString(COBIATEXT("Split Ratio")), realParameter1->getValue());
+		// TODO: Iterate over parameter collection
+		// and import parameter name using identification interface
+		writer.Add(ConstCapeString(COBIATEXT("Outlet temperature")), realParameter1->getValue());
+		writer.Add(ConstCapeString(COBIATEXT("Heat duty")), realParameter2->getValue());
+		writer.Add(ConstCapeString(COBIATEXT("work")), work->getValue());
+
 		if (clearDirty) {
 			dirty = false;
 		}
@@ -363,7 +391,12 @@ public:
 	void Load(/*in*/ CAPEOPEN_1_2::CapePersistReader reader) {
 		reader.GetString(ConstCapeString(COBIATEXT("name")), name);
 		reader.GetString(ConstCapeString(COBIATEXT("description")), description);
-		realParameter1->putValue(reader.GetReal(ConstCapeString(COBIATEXT("Split Ratio"))));
+		// TODO: Iterate over parameter collection
+		// and import parameter name using identification interface
+		realParameter1->putValue(reader.GetReal(ConstCapeString(COBIATEXT("Outlet temperature"))));
+		realParameter2->putValue(reader.GetReal(ConstCapeString(COBIATEXT("Heat duty"))));
+		work->putValue(reader.GetReal(ConstCapeString(COBIATEXT("work"))));
+
 	}
 	CapeBoolean getIsDirty() {
 		return dirty;

@@ -1,5 +1,6 @@
 #pragma once
 #include <COBIA.h>
+#include <vector>
 
 using namespace COBIA;
 
@@ -7,8 +8,7 @@ class EnergyPort :
 	public CapeOpenObject<EnergyPort>,
 	public CAPEOPEN_1_2::CapeIdentificationAdapter<EnergyPort>,
 	public CAPEOPEN_1_2::CapeUnitPortAdapter<EnergyPort>,
-	public CAPEOPEN_1_2::CapeCollectionAdapter<CAPEOPEN_1_2::CapeRealParameter,EnergyPort>,
-	public CAPEOPEN_1_2::CapeParameterSpecificationAdapter<EnergyPort> {
+	public CAPEOPEN_1_2::CapeCollectionAdapter<CAPEOPEN_1_2::CapeParameter,EnergyPort> {
 
 	// Members
 	CapeStringImpl& unitName;
@@ -19,7 +19,7 @@ class EnergyPort :
 	
 	CAPEOPEN_1_2::CapeValidationStatus unitValidationStatus;
 
-	std::vector<CAPEOPEN_1_2::CapeRealParameter> parameters;
+	std::vector<CAPEOPEN_1_2::CapeParameter> parameters;
 
 public:
 
@@ -75,9 +75,9 @@ public:
 	}
 	
 	void Connect(/*in*/ CapeInterface objectToConnect) {
-		CapeInterface newEnergyObject = objectToConnect;
+		CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeParameter> newEnergyObject = (ICapeInterface*)objectToConnect;
 		if (!newEnergyObject) {
-			//expected a energy object
+			//expected an energy object
 			throw cape_open_error(COBIAERR_NoSuchInterface);
 		}
 		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
@@ -89,9 +89,9 @@ public:
 		connectedEnergyObject.clear();
 	}
 
-	//CAPEOPEN_1_2::ICapeCollection<CAPEOPEN_1_2::ICapeRealParameter>
+	//CAPEOPEN_1_2::ICapeCollection<CAPEOPEN_1_2::ICapeParameter>
 	
-	CAPEOPEN_1_2::CapeRealParameter Item(/*in*/ CapeInteger index) {
+	CAPEOPEN_1_2::CapeParameter Item(/*in*/ CapeInteger index) {
 		if ((index < 0) || (index >= parameters.size()))
 		{
 			throw cape_open_error(COBIAERR_NoSuchItem);
@@ -99,9 +99,9 @@ public:
 		return parameters[index];
 	}
 	
-	CAPEOPEN_1_2::CapeRealParameter Item(/*in*/ CapeString name) {
+	CAPEOPEN_1_2::CapeParameter Item(/*in*/ CapeString name) {
 		CapeString paramName;
-		for (CAPEOPEN_1_2::CapeRealParameter& p : parameters)
+		for (CAPEOPEN_1_2::CapeParameter& p : parameters)
 		{
 			CAPEOPEN_1_2::CapeIdentification paramIdentification(p);
 			paramIdentification.getComponentName(paramName);
@@ -114,15 +114,8 @@ public:
 		throw cape_open_error(COBIAERR_NoSuchItem);
 	}
 
-	
 	CapeInteger getCount() {
 		return (CapeInteger)parameters.size();
-	}
-	
-	//CAPEOPEN_1_2::ICapeParameterSpecification
-	
-	CAPEOPEN_1_2::CapeParamType getType() {
-		return CAPEOPEN_1_2::CAPE_PARAMETER_REAL;
 	}
 	
 };
