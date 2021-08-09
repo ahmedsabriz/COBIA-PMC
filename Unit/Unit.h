@@ -35,7 +35,7 @@ class Unit :
 	// Ports and Parameters
 	MaterialPortPtr feed1, product1;
 	EnergyPortPtr energy;
-	RealParameterPtr work, realParameter1, realParameter2;
+	RealParameterPtr realParameter1, realParameter2, work, temperatureLow, temperatureHigh;
 
 	// Collections
 	PortCollectionPtr portCollection;
@@ -84,17 +84,23 @@ public:
 		validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED), dirty(false),
 		feed1(new MaterialPort(COBIATEXT("Feed 1"), CAPEOPEN_1_2::CAPE_INLET, name, validationStatus)),
 		product1(new MaterialPort(COBIATEXT("Product 1"), CAPEOPEN_1_2::CAPE_OUTLET, name, validationStatus)),
-		energy(new EnergyPort(COBIATEXT("Energy"), CAPEOPEN_1_2::CAPE_INLET, name, validationStatus)),
-		realParameter1(new RealParameter(name, COBIATEXT("Outlet temperature"), 373.15, 73.15, 1273.15,
+		energy(new EnergyPort(COBIATEXT("Energy"), CAPEOPEN_1_2::CAPE_OUTLET, name, validationStatus)),
+		realParameter1(new RealParameter(name, COBIATEXT("Outlet temperature"), 273.15, 73.15, 1273.15,
 			CAPEOPEN_1_2::CAPE_INPUT, validationStatus, dirty)),
 		realParameter2(new RealParameter(name, COBIATEXT("Heat duty"), 0, -(std::pow(2, 64)), std::pow(2, 64),
 			CAPEOPEN_1_2::CAPE_OUTPUT, validationStatus, dirty)),
 		work(new RealParameter(name, COBIATEXT("work"), 0, -(std::pow(2, 64)), std::pow(2, 64),
 			CAPEOPEN_1_2::CAPE_OUTPUT, validationStatus, dirty)),
+		temperatureLow(new RealParameter(name, COBIATEXT("temperatureLow"), 273.15, 73.15, 1273.15,
+			CAPEOPEN_1_2::CAPE_OUTPUT, validationStatus, dirty)),
+		temperatureHigh(new RealParameter(name, COBIATEXT("temperatureHigh"), 273.15, 73.15, 1273.15,
+			CAPEOPEN_1_2::CAPE_OUTPUT, validationStatus, dirty)),
 		portCollection(new PortCollection(name)), paramCollection(new ParameterCollection(name)) {
 
 		// Set parameter dimensionality
 		realParameter1->putDimensionality(4, 1); // K
+		temperatureLow->putDimensionality(4, 1); // K
+		temperatureHigh->putDimensionality(4, 1); // K
 		realParameter2->putDimensionality(0, 2); // m
 		realParameter2->putDimensionality(1, 1); // kg
 		realParameter2->putDimensionality(2, -3); // s
@@ -106,9 +112,11 @@ public:
 		portCollection->addPort(feed1);
 		portCollection->addPort(product1);
 		portCollection->addPort(energy);
-		energy->addParameter(work);
 		paramCollection->addParameter(realParameter1);
 		paramCollection->addParameter(realParameter2);
+		energy->addParameter(work);
+		energy->addParameter(temperatureLow);
+		energy->addParameter(temperatureHigh);
 
 		
 		// Prepare T & P flash conditions for product flash
@@ -172,7 +180,10 @@ public:
 		product1Flow[0] = feed1Flow[0];
 
 		// Energy Balance // TODO: Pressure drop
+		energy->getCollection()[L"temperatureLow"].putValue(T[0]);
 		T[0] = realParameter1->getValue();
+		energy->getCollection()[L"temperatureHigh"].putValue(T[0]);
+
 
 		// Set product(s) overall props.
 		product1Material.SetOverallProp(ConstCapeString(COBIATEXT("totalFlow")),
@@ -248,7 +259,8 @@ public:
 
 		realParameter2->putValue((product1Enthalpy[product1Enthalpy.size() - 1]
 			- feed1Enthalpy[feed1Enthalpy.size() - 1]) * feed1Flow[0]);
-		work->putValue(realParameter2->getValue());
+		energy->getCollection()[L"work"].putValue(-(realParameter2->getValue()));
+		// Negative sign becaue energy is set as output in a heater
 	}
 
 	CapeBoolean Validate(/*out*/ CapeString message) {
@@ -266,6 +278,14 @@ public:
 
 		if (work->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
 			val = work->Validate(message) && work->Validate(work->getValue(), message);
+		}
+
+		if (temperatureLow->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
+			val = temperatureLow->Validate(message) && temperatureLow->Validate(temperatureLow->getValue(), message);
+		}
+
+		if (temperatureHigh->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
+			val = temperatureHigh->Validate(message) && temperatureHigh->Validate(temperatureHigh->getValue(), message);
 		}
 
 		// Check whether all ports are connected, and connected to materials with equal compound lists
@@ -382,6 +402,9 @@ public:
 		writer.Add(ConstCapeString(COBIATEXT("Outlet temperature")), realParameter1->getValue());
 		writer.Add(ConstCapeString(COBIATEXT("Heat duty")), realParameter2->getValue());
 		writer.Add(ConstCapeString(COBIATEXT("work")), work->getValue());
+		writer.Add(ConstCapeString(COBIATEXT("temperatureLow")), temperatureLow->getValue());
+		writer.Add(ConstCapeString(COBIATEXT("temperatureHigh")), temperatureHigh->getValue());
+
 
 		if (clearDirty) {
 			dirty = false;
@@ -396,6 +419,8 @@ public:
 		realParameter1->putValue(reader.GetReal(ConstCapeString(COBIATEXT("Outlet temperature"))));
 		realParameter2->putValue(reader.GetReal(ConstCapeString(COBIATEXT("Heat duty"))));
 		work->putValue(reader.GetReal(ConstCapeString(COBIATEXT("work"))));
+		temperatureLow->putValue(reader.GetReal(ConstCapeString(COBIATEXT("temperatureLow"))));
+		temperatureHigh->putValue(reader.GetReal(ConstCapeString(COBIATEXT("temperatureHigh"))));
 
 	}
 	CapeBoolean getIsDirty() {

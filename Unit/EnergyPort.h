@@ -36,11 +36,6 @@ public:
 	~EnergyPort() {
 	}
 
-	// Method to adding parameters to the collection
-	void addParameter(CAPEOPEN_1_2::CapeParameter param) {
-		parameters.emplace_back(param);
-	}
-
 	//CAPEOPEN_1_2::ICapeIdentification
 	
 	void getComponentName(/*out*/ CapeString name) {
@@ -59,7 +54,16 @@ public:
 		throw cape_open_error(COBIAERR_Denied);
 	}
 
+	// Method to adding parameters to the collection
+	void addParameter(CAPEOPEN_1_2::CapeParameter param) {
+		parameters.emplace_back(param);
+	}
 	
+	// Method to expose the energy stream as a real parameter collection
+	CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeRealParameter> getCollection() {
+		return (CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeRealParameter>) connectedEnergyObject;
+	}
+
 	//CAPEOPEN_1_2::ICapeUnitPort
 	
 	CAPEOPEN_1_2::CapePortType getPortType() {
@@ -76,6 +80,7 @@ public:
 	
 	void Connect(/*in*/ CapeInterface objectToConnect) {
 		CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeParameter> newEnergyObject = (ICapeInterface*)objectToConnect;
+		// CAPEOPEN_1_2::CapeParameter zero = newEnergyObject[0];
 		if (!newEnergyObject) {
 			//expected an energy object
 			throw cape_open_error(COBIAERR_NoSuchInterface);
@@ -88,7 +93,7 @@ public:
 		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 		connectedEnergyObject.clear();
 	}
-
+	
 	//CAPEOPEN_1_2::ICapeCollection<CAPEOPEN_1_2::ICapeParameter>
 	
 	CAPEOPEN_1_2::CapeParameter Item(/*in*/ CapeInteger index) {
@@ -113,11 +118,11 @@ public:
 		// If not found (no return)
 		throw cape_open_error(COBIAERR_NoSuchItem);
 	}
-
+	
 	CapeInteger getCount() {
 		return (CapeInteger)parameters.size();
 	}
-	
+
 };
 
 using EnergyPortPtr = CapeOpenObjectSmartPointer<EnergyPort>;
