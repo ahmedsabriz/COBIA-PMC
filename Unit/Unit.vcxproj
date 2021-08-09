@@ -147,6 +147,7 @@
     <ClCompile Include="Unit.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="EnergyPort.h" />
     <ClInclude Include="MaterialPort.h" />
     <ClInclude Include="ParameterCollection.h" />
     <ClInclude Include="PortCollection.h" />
