@@ -365,3 +365,5 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
+/boost_1_77_0
+/Unit/boost/numeric

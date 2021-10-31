@@ -15,7 +15,7 @@ class RealParameter :
 	CapeStringImpl& unitName;
 	CapeStringImpl paramName;
 	CapeReal value, defaultValue, upperBound, lowerBound;
-	CapeReal dimensionality[9] = { 0, 0, 0, 0, 0, 0, 0, 0 ,0 };
+	CapeReal dimensionality[9] = { 0, 0, 0, 0, 0, 0, 0, 0 ,0 }; // TODO: Use built-in CapeEnumeration
 	CAPEOPEN_1_2::CapeParamMode paramMode;
 	CAPEOPEN_1_2::CapeValidationStatus paramValidationStatus;
 	CAPEOPEN_1_2::CapeValidationStatus& unitValidationStatus;
