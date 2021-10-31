@@ -183,7 +183,6 @@ public:
 		solver->setProducts();
 
 
-
 		// Allow all phases to take part in product flash
 		product1Material.SetPresentPhases(product1PhaseIDs, product1FlashPhaseStatus);
 
