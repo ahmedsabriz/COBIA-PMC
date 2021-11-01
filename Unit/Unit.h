@@ -175,8 +175,11 @@ public:
 			throw cape_open_error(COBIATEXT("Unit is not in a valid state"));
 		}
 
-		SolverPtr solver = new Solver(this->feed1->getMaterial(), this->product1->getMaterial(),
-			this->reactionPackage->getReactions());
+		// CAPE-OPEN unit operations may not have side effects on material objects connected to feeds.
+		// Product material object id copied from feed material object allowing to perfrom calculations
+		// before setting its properties to override feed peoperties' values
+		this->product1->getMaterial().CopyFromMaterial(this->feed1->getMaterial());
+		SolverPtr solver = new Solver(this->product1->getMaterial(), this->reactionPackage->getReactions());
 		solver->getInitialConditions();
 		solver->odeSolver();
 		solver->getInitialConditions();
