@@ -12,11 +12,12 @@ class ReactionPackage :
 	// Members
 	CapeStringImpl packageName, packageDesc;
 	CapeArrayStringImpl compIDs;
-	CapeInteger numComponents, numReactions;
 
 	std::vector<ReactionPtr> reactions;
 
 public:
+
+	CapeInteger numComponents, numReactions;
 
 	const CapeStringImpl getDescriptionForErrorSource() {
 		return packageName + COBIATEXT(" ReactionPackage");
