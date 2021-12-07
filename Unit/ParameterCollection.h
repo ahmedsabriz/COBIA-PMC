@@ -65,6 +65,16 @@ public:
 		}
 		return parameters[index];
 	}
+
+	CAPEOPEN_1_2::CapeRealParameter RealItem(/*in*/ CapeInteger index) {
+		if ((index < 0) || (index >= parameters.size())) {
+			throw cape_open_error(COBIAERR_NoSuchItem);
+		}
+		else if (parameters[index].getType() != CAPEOPEN_1_2::CAPE_PARAMETER_REAL) {
+			throw cape_open_error(COBIAERR_InvalidArgument);
+		}
+		return parameters[index];
+	}
 	
 	// Lookup by name
 	CAPEOPEN_1_2::CapeParameter Item(/*in*/ CapeString name) {
