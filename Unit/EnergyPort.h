@@ -79,7 +79,7 @@ public:
 	}
 	
 	void Connect(/*in*/ CapeInterface objectToConnect) {
-		CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeParameter> newEnergyObject = (ICapeInterface*)objectToConnect;
+		CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeParameter> newEnergyObject = objectToConnect;
 		// CAPEOPEN_1_2::CapeParameter zero = newEnergyObject[0];
 		if (!newEnergyObject) {
 			//expected an energy object
