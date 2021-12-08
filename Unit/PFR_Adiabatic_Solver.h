@@ -84,12 +84,13 @@ public:
 
 		for (ReactionPtr reaction : reactions) {
 			k = reaction->forwarRateConstant * std::exp(-reaction->forward_ArrheniusEnergy
-				/ 8.31446261815324 / Treact);											// [mol/m3/Pa/s]
+				/ 8.31446261815324 / Treact);								// [mol/m3/Pa/s]
 			r = k * p;														// [mol/m3/s]
 			for (size_t i = 0; i < numComponents; i++) {
 				R[i] += reaction->stoichiometry[i] * r;						// [mol/m3/s]
 				dydz[i] = reactorVolume.getValue() / reactorLength.getValue() * R[i];
 			}
+			// To Do: Calculate Qr as function of T
 			Qr = reaction->heatOfReaction * R[base];						// [J/m3/s]
 		}
 		dydz[numComponents] = reactorVolume.getValue() / reactorLength.getValue() * Qr
