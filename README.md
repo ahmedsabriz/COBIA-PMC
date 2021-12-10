@@ -33,6 +33,7 @@ CAPE-OPEN Unit Operation developed for COBIA middleware. The unit emulates the b
 ### Unit Parameters
 1. reaactorLength
 2. reactorVolume
+3. conversion
 ### Energy Parameters
 1. work
 2. temperatureLow  // Not utilised
