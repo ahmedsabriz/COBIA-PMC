@@ -57,6 +57,6 @@ CAPE-OPEN Unit Operation developed for COBIA middleware. The unit emulates the b
 <img width="479" alt="COBIA_PFR_Adiabatic" src="https://user-images.githubusercontent.com/80135041/145171803-a2a03a67-6bea-42db-8299-a779e9c6cfd1.png">
 
 ## HYSYS Benchmark
-Values vary around 0-2% mainly due to model assuming constant heat of reaction and heat capacity throughout 130°C range
+Values vary around 2% mainly due to model assuming constant heat of reaction and heat capacity throughout 210°C range
 
 <img width="674" alt="HYSYS_PFR_Adiabatic" src="https://user-images.githubusercontent.com/80135041/145166322-36f82c31-f9ed-4963-acda-7f8e3fa74da7.png">
