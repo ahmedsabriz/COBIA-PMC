@@ -60,7 +60,7 @@ public:
 	}
 
 	void pfr(state_type& y, state_type& dydz, CapeReal z) {
-		/* Assumuptions:
+		/* Assumptions:
 		*				1D
 		*				Homogenous
 		*				Empty bed
