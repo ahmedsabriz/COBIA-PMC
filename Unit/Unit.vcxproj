@@ -154,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EnergyPort.h" />
+    <ClInclude Include="Validator.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="MaterialPort.h" />
     <ClInclude Include="ParameterCollection.h" />
@@ -161,7 +162,7 @@
     <ClInclude Include="Reaction.h" />
     <ClInclude Include="ReactionPackage.h" />
     <ClInclude Include="RealParameter.h" />
-    <ClInclude Include="PFR_Adiabatic_Solver.h" />
+    <ClInclude Include="Solver.h" />
     <ClInclude Include="Unit.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

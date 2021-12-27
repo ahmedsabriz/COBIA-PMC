@@ -7,17 +7,24 @@ using namespace COBIA;
 // Reaction package enums
 enum class CapeReactionType : CapeEnumeration {
 	// Focus on single option for Proof Of Concept
-	CAPE_KINETIC = 0
+	CAPE_KINETIC = 0,
 };
 
 enum class CapeReactionBasis : CapeEnumeration {
 	// Focus on single option for Proof Of Concept
-	CAPE_MOLE_FRACTION = 0
+	CAPE_MOLE_FRACTION = 0,
 };
 
 enum class CapeReactionPhase : CapeEnumeration {
 	// Focus on single option for Proof Of Concept
-	CAPE_VAPOR = 0
+	CAPE_VAPOR = 0,
+};
+
+// MiltiStream Heat Exchanger side
+enum class CapeStreamSide : CapeEnumeration {
+	CAPE_UNSELECTED = 0,
+	CAPE_HOT = 1,
+	CAPE_COLD = 2,
 };
 
 CapeReal calcOverallFromPhaseProps(/*in*/ CAPEOPEN_1_2::CapeThermoMaterial thermoMaterial,

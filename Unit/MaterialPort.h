@@ -1,5 +1,6 @@
 #pragma once
 #include <COBIA.h>
+#include "Helpers.h"
 
 using namespace COBIA;
 
@@ -9,13 +10,17 @@ class MaterialPort :
 	public CAPEOPEN_1_2::CapeUnitPortAdapter<MaterialPort> {
 
 	// Members
-	CapeStringImpl& unitName;
+	CapeStringImpl &unitName;
+	CAPEOPEN_1_2::CapeValidationStatus &unitValidationStatus;
+
 	CapeStringImpl portName;
+	CapeBoolean primary;
+	CAPEOPEN_1_2::CapePortDirection direction;	
 
-	CAPEOPEN_1_2::CapePortDirection direction;
 	CAPEOPEN_1_2::CapeThermoMaterial connectedMaterial;
+	CapeBoolean connected;
+	CapeStreamSide side;
 
-	CAPEOPEN_1_2::CapeValidationStatus unitValidationStatus;
 
 public:
 
@@ -23,13 +28,28 @@ public:
 		return portName + COBIATEXT(" port of ") + unitName;
 	}
 
-	MaterialPort(const COBIACHAR* _portName, CAPEOPEN_1_2::CapePortDirection _direction,
-		CapeStringImpl& _unitName, CAPEOPEN_1_2::CapeValidationStatus& _unitValidationStatus) :
-		portName(_portName), direction(_direction),
-		unitName(_unitName), unitValidationStatus(_unitValidationStatus) {
+	MaterialPort(CapeStringImpl& _unitName, CAPEOPEN_1_2::CapeValidationStatus& _unitValidationStatus,
+		const COBIACHAR* _portName, CapeBoolean _primary,
+		CAPEOPEN_1_2::CapePortDirection _direction) :
+		unitName(_unitName), unitValidationStatus(_unitValidationStatus),
+		portName(_portName), primary(_primary), direction(_direction) {
+		connected = true;
+		side = CapeStreamSide::CAPE_UNSELECTED;
 	}
 
 	~MaterialPort() {
+	}
+
+	CapeBoolean isPrimary() {
+		return primary;
+	}
+
+	CapeBoolean isConnected() {
+		return connected;
+	}
+
+	void ignoreOptionalStream() {
+		this->connected = false;
 	}
 
 	// CAPEOPEN_1_2::ICapeIdentification
@@ -43,7 +63,7 @@ public:
 	}
 
 	void getComponentDescription(/*out*/ CapeString desc) {
-		desc = L"Materialport";
+		desc = COBIATEXT("Material Port");
 	}
 
 	void putComponentDescription(/*in*/ CapeString desc) {

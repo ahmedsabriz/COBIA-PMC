@@ -38,7 +38,7 @@ public:
 		ports.emplace_back(port);
 	}
 
-	// Method to removing ports from the collection is missing
+	// Method to removing ports from the collection - Not Implemented
 
 	// CAPEOPEN_1_2::ICapeIdentification
 
