@@ -1,0 +1,1 @@
+int _matherr(struct _exception* except);
