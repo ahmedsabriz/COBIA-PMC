@@ -41,19 +41,15 @@ public:
 	// Method to removing ports from the collection - Not Implemented
 
 	// CAPEOPEN_1_2::ICapeIdentification
-
 	void getComponentName(/*out*/ CapeString name) {
 		name = COBIATEXT("Port collection");
 	}
-
 	void putComponentName(/*in*/ CapeString name) {
 		throw cape_open_error(COBIAERR_Denied);
 	}
-
 	void getComponentDescription(/*out*/ CapeString desc) {
 		desc = COBIATEXT("Port collection");
 	}
-
 	void putComponentDescription(/*in*/ CapeString desc) {
 		throw cape_open_error(COBIAERR_Denied);
 	}
@@ -71,7 +67,7 @@ public:
 	// Lookup by name
 	CAPEOPEN_1_2::CapeUnitPort Item(/*in*/ CapeString name) {
 		CapeString portName;
-		for (CAPEOPEN_1_2::CapeUnitPort& portPtr : ports) {
+		for (CAPEOPEN_1_2::CapeUnitPort portPtr : ports) {
 			CAPEOPEN_1_2::CapeIdentification portIdentification(portPtr);
 			portIdentification.getComponentName(portName);
 			if (portName == name)

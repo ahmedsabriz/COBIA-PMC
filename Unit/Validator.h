@@ -1,7 +1,7 @@
 #pragma once
 #include <COBIA.h>
-#include "MaterialPort.h"
 #include "PortCollection.h"
+#include "MaterialPort.h"
 
 using namespace COBIA;
 
@@ -11,13 +11,17 @@ class Validator :
 	/*
 	* Validator Class
 	* TODO: Description
+	* Validate ICapeParameterSpecification & ICapeRealParameterSpecification
+	* if (param1->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
+	*	val = param1->Validate(message) && param1->Validate(param1->getValue(), message);
+	* }
 	*/
 
 	public CapeOpenObject<Validator>,
 	public CAPEOPEN_1_2::CapeIdentificationAdapter<Validator> {
 	
 	// Members
-	CAPEOPEN_1_2::CapeCollection<MaterialPort> portCollection;
+	PortCollectionPtr& portCollection;
 
 public:
 
@@ -25,17 +29,11 @@ public:
 		return COBIATEXT("Validator");
 	}
 
-	Validator(CAPEOPEN_1_2::CapeCollection<MaterialPort> _portCollection) : portCollection(_portCollection) {
+	Validator(PortCollectionPtr& _portCollection) : portCollection(_portCollection) {
 	}
 
 	~Validator() {
 	}
-
-	// Validate ICapeParameterSpecification & ICapeRealParameterSpecification
-	// TODO: Iterate over parameter collection instead
-	/*if (param1->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
-		val = param1->Validate(message) && param1->Validate(param1->getValue(), message);*/
-
 
 	CapeBoolean validateMaterialPorts(/*out*/ CapeString message) {
 
@@ -47,25 +45,25 @@ public:
 		CapeArrayRealImpl boilTemps, molecularWeights;
 		CapeBoolean sameCompList;
 
-		for (MaterialPort p : portCollection) {
-			connectedObject = p.getConnectedObject();
-
+		MaterialPortPtr portPtr;
+		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
+			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
+			connectedObject = portPtr->getConnectedObject();
 			// Check whether port is connected
 			if (!connectedObject) {
-				if (p.isPrimary()) {
-					p.getComponentName(portName);
+				if (portPtr->isPrimary()) {
+					portPtr->getComponentName(portName);
 					CapeStringImpl _portName(portName);
 					message = COBIATEXT("Port ") + _portName + COBIATEXT(" is not connected");
 					return false;
 				}
 				else {
-					p.ignoreOptionalStream();
+					portPtr->ignoreOptionalStream();
 				}
 			}
 
-			if (p.isConnected() && p.getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL) {
+			if (portPtr->isConnected() && portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL) {
 				CAPEOPEN_1_2::CapeThermoCompounds compounds(connectedObject);
-
 				// Get compound list for from first stream as reference
 				if (refCompIDs.empty()) {
 					compounds.GetCompoundList(refCompIDs, formulae, names,
@@ -89,27 +87,53 @@ public:
 		}
 		return true;
 	}
-	// TODO (Unit Specific)
-	// Validate that each input has output
-	// Validate a minimum of 1 hot and 1 cold streams
 
-	void preparePhaseIDs (/*out*/ std::vector<CapeArrayStringImpl> productsPhaseIDs,
-		/*out*/ std::vector<CapeArrayEnumerationImpl<CAPEOPEN_1_2::CapePhaseStatus>> productsPhaseStatus) {
+	CapeBoolean validateHeatExchangerInletOutlet(/*out*/ CapeString message) {
 
+		// 	Validate that each optional inlet has an output
+		MaterialPortPtr portPtr;
+		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
+			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
+			if (
+				!portPtr->isPrimary() &&
+				portPtr->isConnected() &&
+				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
+				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_INLET
+				) {
+				if (!static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i + 1))->isConnected()) {
+					message = COBIATEXT("An inlet material stream is missing an output connection");
+					return false;
+				}
+			}
+		}
+		
+		// TODO: Validate a minimum of 1 hot and 1 cold streams
+
+		return true;
+	}
+
+	void preparePhaseIDs (/*out*/ std::vector<CapeArrayStringImpl> &productsPhaseIDs,
+		/*out*/ std::vector<CapeArrayEnumerationImpl<CAPEOPEN_1_2::CapePhaseStatus>> &productsPhaseStatus) {
+
+		// Clear vectors before requesting phaseIDs of products
+		productsPhaseIDs.clear();
+		productsPhaseStatus.clear();
 		// Prepare lists of supported phase label and phase status for product flash
 		// This remains constant between validations
 		CAPEOPEN_1_2::CapeThermoMaterial material;
 		CapeArrayStringImpl phaseIDs, stateOfAggregation, keyCompounds;
 		CapeArrayEnumerationImpl<CAPEOPEN_1_2::CapePhaseStatus> phaseStatus;
 
-		for (MaterialPort p : portCollection) {
-			if (p.isConnected() && p.getPortType() == CAPEOPEN_1_2::CAPE_OUTLET) {
-				material = p.getMaterial();
+		MaterialPortPtr portPtr;
+		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
+			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
+			if (portPtr->isConnected() && portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
+				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
+				material = portPtr->getMaterial();
 				CAPEOPEN_1_2::CapeThermoPhases phases(material);
 				phases.GetPhaseList(phaseIDs, stateOfAggregation, keyCompounds);
 				phaseStatus.resize(phaseIDs.size());
 				std::fill(phaseStatus.begin(), phaseStatus.end(), CAPEOPEN_1_2::CAPE_UNKNOWNPHASESTATUS);
-
 				productsPhaseIDs.emplace_back(phaseIDs);
 				productsPhaseStatus.emplace_back(phaseStatus);
 			}
@@ -129,7 +153,6 @@ public:
 	void putComponentDescription(/*in*/ CapeString desc) {
 		throw cape_open_error(COBIAERR_Denied);
 	}
-
 };
 
 using ValidatorPtr = CapeOpenObjectSmartPointer<Validator>;

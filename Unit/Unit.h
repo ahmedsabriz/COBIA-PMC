@@ -2,9 +2,7 @@
 #include <COBIA.h>
 #include "MaterialPort.h"
 #include "PortCollection.h"
-#include "RealParameter.h"
 #include "ParameterCollection.h"
-#include "ReactionPackage.h"
 #include "Helpers.h"
 #include "Validator.h"
 #include "Solver.h"
@@ -54,17 +52,10 @@ class Unit :
 
 	// Members: Ports and Parameters
 	MaterialPortPtr in1, in2, in3, in4, in5, out1, out2, out3, out4, out5;
-	// RealParameterPtr param1; Not impelemted
 
 	// Members: Collections
 	PortCollectionPtr portCollection;
 	ParameterCollectionPtr paramCollection;
-
-	// Members: Reaction Packages
-	ReactionPackagePtr reactionPackage;
-
-	// Members: Simulation Context
-	CAPEOPEN_1_2::CapeSimulationContext simulationContext; // Not Implemented
 
 	// Flash arguments
 	std::vector<CapeArrayStringImpl> productsPhaseIDs;
@@ -98,22 +89,23 @@ public:
 
 	// Constructor and members initialisation
 	Unit()  :
-		name(unitName),	description(unitDescription),
-		validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED), dirty(false),
-		 in1(new MaterialPort(name, validationStatus, COBIATEXT("Input 1"), true, CAPEOPEN_1_2::CAPE_INLET)),
-		out1(new MaterialPort(name, validationStatus, COBIATEXT("Ouput 1"), true, CAPEOPEN_1_2::CAPE_OUTLET)),
-		 in2(new MaterialPort(name, validationStatus, COBIATEXT("Input 2"), true, CAPEOPEN_1_2::CAPE_INLET)),
-		out2(new MaterialPort(name, validationStatus, COBIATEXT("Ouput 2"), true, CAPEOPEN_1_2::CAPE_OUTLET)),
-		 in3(new MaterialPort(name, validationStatus, COBIATEXT("Input 3"), false, CAPEOPEN_1_2::CAPE_INLET)),
-		out3(new MaterialPort(name, validationStatus, COBIATEXT("Ouput 3"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
-		 in4(new MaterialPort(name, validationStatus, COBIATEXT("Input 4"), false, CAPEOPEN_1_2::CAPE_INLET)),
-		out4(new MaterialPort(name, validationStatus, COBIATEXT("Ouput 4"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
-		 in5(new MaterialPort(name, validationStatus, COBIATEXT("Input 5"), false, CAPEOPEN_1_2::CAPE_INLET)),
-		out5(new MaterialPort(name, validationStatus, COBIATEXT("Ouput 5"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
-		
-		portCollection(new PortCollection(name)), paramCollection(new ParameterCollection(name)),
-
-		reactionPackage(new ReactionPackage(COBIATEXT("reactionPackage1"), COBIATEXT("reactionPackage1Desc"))) {
+		name(unitName),
+		description(unitDescription),
+		validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED),
+		dirty(false),
+		// Inlet Stream should be followed by its outlet to reserve indexing. Energy streams should be placed at the end
+		in1(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 1"), true, CAPEOPEN_1_2::CAPE_INLET)),
+		out1(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 1"), true, CAPEOPEN_1_2::CAPE_OUTLET)),
+		in2(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 2"), true, CAPEOPEN_1_2::CAPE_INLET)),
+		out2(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 2"), true, CAPEOPEN_1_2::CAPE_OUTLET)),
+		in3(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 3"), false, CAPEOPEN_1_2::CAPE_INLET)),
+		out3(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 3"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
+		in4(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 4"), false, CAPEOPEN_1_2::CAPE_INLET)),
+		out4(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 4"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
+		in5(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 5"), false, CAPEOPEN_1_2::CAPE_INLET)),
+		out5(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 5"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
+		portCollection(new PortCollection(name)),
+		paramCollection(new ParameterCollection(name)) {
 
 		// Add ports to port collection
 		portCollection->addPort(in1);
@@ -127,14 +119,9 @@ public:
 		portCollection->addPort(in5);
 		portCollection->addPort(out5);
 
-		// Add parameters to parameter collection - Not Implemented
-		
-		// Add energy port parameters to energy port (a parameter collection) - Not Implemented
-
-		// Set parameter dimensionality - Not Implemented
-
 		// Prepare T & P flash specifications for products flash
-		// specification format: CapeArrayRealImpl = { propertyIdentifier, basis, phaseLabel [, compoundIdentifier] }
+		// specification format:
+		// CapeArrayRealImpl = { propertyIdentifier, basis, phaseLabel [, compoundIdentifier] }
 		// basis is undefined when it is not a dependency of the property (e.g. T, P)
 		flashCond1.resize(3);
 		flashCond1[0] = COBIATEXT("temperature");
@@ -142,19 +129,8 @@ public:
 		flashCond2.resize(3);
 		flashCond2[0] = COBIATEXT("pressure");
 		flashCond2[2] = COBIATEXT("overall");
-
-		// Set reaction package
-		// *** HARDCODING FOR PROOF OF CONCEPT ***
-		reactionPackage->addComponents(COBIATEXT("p-Hydrogen"));
-		reactionPackage->addComponents(COBIATEXT("o-Hydrogen"));
-
-		std::vector<CapeInteger> rxn1Stoichiometry({ -1, 1});
-		reactionPackage->addReactions(COBIATEXT("Rxn1"), COBIATEXT("Ortho-Para-Hydrogen Conversion"),
-			CapeReactionType::CAPE_KINETIC, CapeReactionPhase::CAPE_VAPOR, rxn1Stoichiometry,
-			0, CapeReactionBasis::CAPE_MOLE_FRACTION, 0, 0, 0);
 	}
 
-	// Deconstructor
 	~Unit() {
 	}
 
@@ -181,11 +157,10 @@ public:
 	CAPEOPEN_1_2::CapeValidationStatus getValStatus() {
 		return validationStatus;
 	}
-
 	CapeBoolean Validate(/*out*/ CapeString message) {
-		ValidatorPtr validator = new Validator(this->portCollection);
-		if (validator->validateMaterialPorts(message)) {
-			validator->preparePhaseIDs(this->productsPhaseIDs, this->productsPhaseStatus);
+		ValidatorPtr validator = new Validator(portCollection);
+		if (validator->validateMaterialPorts(message) && validator->validateHeatExchangerInletOutlet(message)) {
+			validator->preparePhaseIDs(productsPhaseIDs, productsPhaseStatus);
 			validationStatus = CAPEOPEN_1_2::CAPE_VALID;
 			return true;
 		}
@@ -195,22 +170,18 @@ public:
 		}
 	}
 
-	void Calculate() {
-		
+	void Calculate() {	
 		// Check validation status before calculation
 		if (validationStatus != CAPEOPEN_1_2::CAPE_VALID) {
 			throw cape_open_error(COBIATEXT("Unit is not in a valid state"));
 		}
 
 		// Initiate Solver
-		SolverPtr solver = new Solver(this->portCollection, this->paramCollection);
-
-		solver->flashProduct(this->productsPhaseIDs, this->productsPhaseStatus,
-			this->flashCond1, this->flashCond2);
+		SolverPtr solver = new Solver(portCollection);
+		solver->flashProduct(productsPhaseIDs, productsPhaseStatus, flashCond1, flashCond2);
 	}
 
 	// CAPEOPEN_1_2::ICapeUtilities
-
 	CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeParameter> getParameters() {
 		if (paramCollection != NULL)
 		{
@@ -219,9 +190,6 @@ public:
 		throw cape_open_error(COBIAERR_NotImplemented);
 	}
 	void putSimulationContext(/*in*/ CAPEOPEN_1_2::CapeSimulationContext context) {
-		// Storing a reference in case any COSE implementation is needed in future
-		this->simulationContext = context;
-		// For now an error is thrown
 		throw cape_open_error(COBIAERR_NotImplemented);
 	}
 
@@ -244,30 +212,25 @@ public:
 			p.Disconnect();
 		}
 		// In case a reference to the simulation context is stored, it too must be released at Terminate
-		simulationContext.clear();
-
+		// simulationContext.clear();
 	}
 	CAPEOPEN_1_2::CapeEditResult Edit(CapeWindowId parent) {
 		// TODO
-		// For now, an error is thrown
 		throw cape_open_error(COBIAERR_NotImplemented);
 	}
 
 	//CAPEOPEN_1_2::ICapePersist
-
 	void Save(/*in*/ CAPEOPEN_1_2::CapePersistWriter writer,/*in*/ CapeBoolean clearDirty) {
 		writer.Add(ConstCapeString(COBIATEXT("name")), name);
 		writer.Add(ConstCapeString(COBIATEXT("description")), description);
 		// TODO: Iterate over parameter collection
 		// and import parameter name using identification interface
 		// writer.Add(ConstCapeString(COBIATEXT("param")), param->getValue());
-	
 
 		if (clearDirty) {
 			dirty = false;
 		}
 	}
-
 	void Load(/*in*/ CAPEOPEN_1_2::CapePersistReader reader) {
 		reader.GetString(ConstCapeString(COBIATEXT("name")), name);
 		reader.GetString(ConstCapeString(COBIATEXT("description")), description);

@@ -1,31 +1,21 @@
 #pragma once
 #include <COBIA.h>
-#include <boost/numeric/odeint.hpp>
-#include "ParameterCollection.h"
+#include "PortCollection.h"
 #include "MaterialPort.h"
 
-
-using namespace boost::numeric::odeint;
 using namespace COBIA;
-
 
 class Solver :
 
 	/*
-		This solver uses boost's numeric library to solve the defined pfr
-		Class is intiated with a single stream (product) and a reaction package
-		Product stream must be identical to the PFR's single feed stream
+		TODO
 	*/
 
 	public CapeOpenObject<Solver>,
 	public CAPEOPEN_1_2::CapeIdentificationAdapter<Solver> {
 
 	// Members
-	CAPEOPEN_1_2::CapeCollection<MaterialPort> portCollection;
-	ParameterCollectionPtr paramCollection;
-
-	/*CapeArrayRealImpl molarFlow, totalMolarFlow, T, P, X;
-	CapeReal Cp, heatFlow, inletBaseMolarFlow;*/
+	PortCollectionPtr& portCollection;
 
 public:
 
@@ -33,20 +23,17 @@ public:
 		return COBIATEXT("Solver");
 	}
 
-	Solver(CAPEOPEN_1_2::CapeCollection<MaterialPort> _portCollection,
-		ParameterCollectionPtr _paramCollection) :
-		portCollection(_portCollection),
-		paramCollection(_paramCollection) {
+	Solver(PortCollectionPtr& _portCollection) : portCollection(_portCollection) {
 
 		// CAPE-OPEN unit operations may not have side effects on material objects connected to feeds.
 		// Product material object id copied from feed material object allowing to perfrom calculations
 		// before setting its properties to override feed peoperties' values
-		
-		for(MaterialPort p : portCollection) {
-			if (p.isConnected() && p.getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
-				CapeString portName;
-				p.getComponentName(portName);	
-				p.getMaterial().CopyFromMaterial(portCollection[COBIATEXT("Input " + portName.c_str()[portName.length() - 1])].getMaterial());
+		MaterialPortPtr portPtr, inletPtr;
+		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
+			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
+			if (portPtr->isConnected() && portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
+				inletPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i-1));
+				portPtr->getMaterial().CopyFromMaterial(inletPtr->getMaterial());
 			}
 		}
 	}
@@ -55,23 +42,6 @@ public:
 	}
 	
 	void getInitialConditions() {
-
-		// Get inlet molarFlow
-		//product.GetOverallProp(ConstCapeString(COBIATEXT("flow")),
-		//	ConstCapeString(COBIATEXT("mole")), molarFlow);
-		//inletBaseMolarFlow = molarFlow[base];
-
-		//product.GetOverallProp(ConstCapeString(COBIATEXT("totalflow")),
-		//	ConstCapeString(COBIATEXT("mole")), totalMolarFlow);
-
-		//// Get inlet T[K], P[Pa], X[mol/mol]
-		//T.resize(1);
-		//P.resize(1);
-		//product.GetOverallTPFraction(T[0], P[0], X);
-
-		//Cp = calcOverallFromPhaseProps(product, COBIATEXT("heatCapacityCp"));	// [J/mol/K]
-		//heatFlow = calcOverallFromPhaseProps(product, COBIATEXT("enthalpyF")) *
-		//	totalMolarFlow[0];													// [J/mol]
 	}
 
 	void setProduct() {
@@ -82,19 +52,23 @@ public:
 		/*in*/ std::vector<CapeArrayEnumerationImpl<CAPEOPEN_1_2::CapePhaseStatus>> phaseStatus,
 		/*in*/ CapeArrayStringImpl flashCond1, /*in*/ CapeArrayStringImpl flashCond2) {
 
-		size_t i = 0;
-		for (MaterialPort p : portCollection) {
-			if (p.isConnected() && p.getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
+		size_t j = 0;
+		MaterialPortPtr portPtr;
+		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
+			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
+			if (portPtr->isConnected() &&
+				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
+				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
 
 				// Allow all phases to take part in product flash
-				CAPEOPEN_1_2::CapeThermoMaterial material = p.getMaterial();
-				material.SetPresentPhases(phaseIDs[i], phaseStatus[i]);
+				CAPEOPEN_1_2::CapeThermoMaterial material = portPtr->getMaterial();
+				material.SetPresentPhases(phaseIDs[j], phaseStatus[j]);
 
 				// Flash product(s) at specified Conditions
 				CAPEOPEN_1_2::CapeThermoEquilibriumRoutine equilibriumRoutine(material);
 				equilibriumRoutine.CalcEquilibrium(flashCond1, flashCond2, ConstCapeEmptyString());
 
-				i++;
+				j++;
 			}
 		}
 	}
@@ -112,7 +86,6 @@ public:
 	void putComponentDescription(/*in*/ CapeString desc) {
 		throw cape_open_error(COBIAERR_Denied);
 	}
-
 };
 
 using SolverPtr = CapeOpenObjectSmartPointer<Solver>;

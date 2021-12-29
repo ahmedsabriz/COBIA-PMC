@@ -21,7 +21,6 @@ class MaterialPort :
 	CapeBoolean connected;
 	CapeStreamSide side;
 
-
 public:
 
 	const CapeStringImpl getDescriptionForErrorSource() {
@@ -33,7 +32,7 @@ public:
 		CAPEOPEN_1_2::CapePortDirection _direction) :
 		unitName(_unitName), unitValidationStatus(_unitValidationStatus),
 		portName(_portName), primary(_primary), direction(_direction) {
-		connected = true;
+		connected = false;
 		side = CapeStreamSide::CAPE_UNSELECTED;
 	}
 
@@ -52,26 +51,34 @@ public:
 		this->connected = false;
 	}
 
+	CAPEOPEN_1_2::CapeThermoMaterial getMaterial() {
+		return connectedMaterial;
+	}
+
 	// CAPEOPEN_1_2::ICapeIdentification
-	
 	void getComponentName(/*out*/ CapeString name) {
 		name = this->portName;
 	}
-
 	void putComponentName(/*in*/ CapeString name) {
 		throw cape_open_error(COBIAERR_Denied);
 	}
-
 	void getComponentDescription(/*out*/ CapeString desc) {
 		desc = COBIATEXT("Material Port");
 	}
-
 	void putComponentDescription(/*in*/ CapeString desc) {
 		throw cape_open_error(COBIAERR_Denied);
 	}
 	
 	// CAPEOPEN_1_2::ICapeUnitPort
-	
+	CAPEOPEN_1_2::CapePortType getPortType() {
+		return CAPEOPEN_1_2::CAPE_MATERIAL;
+	}
+	CAPEOPEN_1_2::CapePortDirection getDirection() {
+		return direction;
+	}
+	CapeInterface getConnectedObject() {
+		return connectedMaterial;
+	}
 	void Connect(/*in*/ CapeInterface objectToConnect) {
 		CAPEOPEN_1_2::CapeThermoMaterial newConnectedMaterial = objectToConnect;
 		if (!newConnectedMaterial) {
@@ -80,27 +87,12 @@ public:
 		}
 		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 		connectedMaterial = newConnectedMaterial;
+		this->connected = true;
 	}
 	void Disconnect() {
 		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 		connectedMaterial.clear();
-	}
-
-	CAPEOPEN_1_2::CapePortType getPortType() {
-		return CAPEOPEN_1_2::CAPE_MATERIAL;
-	}
-
-	CAPEOPEN_1_2::CapePortDirection getDirection() {
-		return direction;
-	}
-
-	CapeInterface getConnectedObject() {
-		return connectedMaterial;
-	}
-
-	// ICapeThermoMaterial
-	CAPEOPEN_1_2::CapeThermoMaterial getMaterial() {
-		return connectedMaterial;
+		this->connected = false;
 	}
 };
 
