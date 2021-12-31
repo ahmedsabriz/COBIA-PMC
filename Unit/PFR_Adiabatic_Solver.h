@@ -35,11 +35,10 @@ class Solver :
 	// The type of container used to hold the state vector to solve odeint's runge_kutta
 	typedef std::vector<CapeReal> state_type;
 
-	// Focus on single component (Ethyl benzene at index 0] for Proof Of Concept
-	// TODO: convert to reaction parameter
-	size_t base = 0;
-
 public:
+
+	std::vector<state_type> profile;
+	state_type grid;
 
 	const CapeStringImpl getDescriptionForErrorSource() {
 		return COBIATEXT("Solver");
@@ -54,21 +53,23 @@ public:
 		paramCollection(_paramCollection),
 		reactorLength(paramCollection->RealItem(0)), 
 		reactorVolume(paramCollection->RealItem(1)) {
+		getInitialConditions();
+		odeSolver();
 	}
 
 	~Solver() {
 	}
 
 	void pfr(state_type& y, state_type& dydz, CapeReal z) {
-		/* Assumuptions:
-		*				1D
-		*				Homogenous
-		*				Empty bed
-		*				Adiabatic
-		*				Constant heat capacity
-		*				No axial dispersion
-		*				No radial gradient
-		*				No pressure drop
+		/* Assumptions:
+		*	1D
+		*	Homogenous
+		*	Empty bed
+		*	Adiabatic
+		*	Constant heat capacity
+		*	No axial dispersion
+		*	No radial gradient
+		*	No pressure drop
 		*/
 
 		// The following variables are overwritten in every step
@@ -79,7 +80,7 @@ public:
 			n_tot += y[i];													// [mol/s]
 			R[i] = 0;
 		}
-		p = y[base] / n_tot * P[0];											// [Pa]
+		p = y[0] / n_tot * P[0];											// [Pa]
 		Treact = y[numComponents];											// [K]
 
 		for (ReactionPtr reaction : reactions) {
@@ -91,10 +92,32 @@ public:
 				dydz[i] = reactorVolume.getValue() / reactorLength.getValue() * R[i];
 			}
 			// To Do: Calculate Qr as function of T
-			Qr = reaction->heatOfReaction * R[base];						// [J/m3/s]
+			Qr = reaction->heatOfReaction * R[0];							// [J/m3/s]
 		}
 		dydz[numComponents] = reactorVolume.getValue() / reactorLength.getValue() * Qr
 			/ (Cp * totalMolarFlow[0]);										// [K/m]
+
+		// TODO: Set product after each iteration to obtain accurate property
+	}
+
+	// In case of variation in HOR
+	CapeReal heatOfReaction(CapeReal T) {
+
+		CapeInterface connectedObject = productStream->getConnectedObject();
+		CAPEOPEN_1_2::CapeThermoCompounds compounds(connectedObject);
+
+		CapeArrayStringImpl compIDs, formulae, names, casNumbers;
+		CapeArrayRealImpl boilTemps, molecularWeights;
+		compounds.GetCompoundList(compIDs, formulae, names,
+			boilTemps, molecularWeights, casNumbers);
+
+		CapeArrayRealImpl enthalpies;
+		CapeArrayStringImpl props(1);
+		props[0] = COBIATEXT("idealGasEnthalpy");
+		CapeBoolean containsMissingValues = true;
+
+		compounds.GetTDependentProperty(props, T, compIDs, containsMissingValues, enthalpies);
+		return enthalpies[1] + enthalpies[2] - enthalpies[0];
 	}
 
 	void getInitialConditions() {
@@ -102,7 +125,7 @@ public:
 		// Get inlet molarFlow
 		product.GetOverallProp(ConstCapeString(COBIATEXT("flow")),
 			ConstCapeString(COBIATEXT("mole")), molarFlow);
-		inletBaseMolarFlow = molarFlow[base];
+		inletBaseMolarFlow = molarFlow[0];
 
 		product.GetOverallProp(ConstCapeString(COBIATEXT("totalflow")),
 			ConstCapeString(COBIATEXT("mole")), totalMolarFlow);
@@ -117,42 +140,61 @@ public:
 			totalMolarFlow[0];													// [J/mol]
 	}
 
-	void odeSolver() {
+	state_type odeSolver() {
 		
 		// Set initial conditions
 		state_type y(numComponents + 1);
 		for (size_t i = 0; i < numComponents; i++) {
-			y[i] = molarFlow[i];											// [mol/s]
+			y[i] = molarFlow[i];												// [mol/s]
 		}
 		y[numComponents] = T[0];
 
 		// Define step size
-		const CapeReal dz = 0.01;
+		CapeReal dz = 0.01;
+
+		// Observer definition
+		struct observer {
+			std::vector<state_type>& states;
+			std::vector<double>& times;
+
+			observer(std::vector<state_type>& _states, state_type& _times)
+				: states(_states), times(_times) { }
+
+			void operator()(const state_type& y, CapeReal t)
+			{
+				states.push_back(y);
+				times.push_back(t);
+			}
+		};
 
 		// Integrate with constant step
 		// Perfromance optimisation ignored for Proof of Concept
 		using namespace std::placeholders;
 		integrate_const(runge_kutta4<state_type>(),
 			std::bind(&Solver::pfr, this, _1, _2, _3),
-			y, 0.0, this->reactorLength.getValue(), dz);
+			y, 0.0, this->reactorLength.getValue(), dz, observer(profile, grid));
+		
+		setProduct(y, P);
+		return y;
+	}
+
+	void setProduct(/*in*/ state_type y, /*in*/ CapeArrayRealImpl _P) {
 
 		// Post processing
 		totalMolarFlow[0] = 0;
 		for (size_t i = 0; i < numComponents; i++) {
-			molarFlow[i] = y[i];											// [mol/s]
-			totalMolarFlow[0] += molarFlow[i];								// [mol/s]
+			molarFlow[i] = y[i];												// [mol/s]
+			totalMolarFlow[0] += molarFlow[i];									// [mol/s]
 		}
 		T[0] = y[numComponents];
-	}
 
-	void setProduct() {
 		// Set product(s) overall props.
 		product.SetOverallProp(ConstCapeString(COBIATEXT("flow")),
 			ConstCapeString(COBIATEXT("mole")), molarFlow);
 		product.SetOverallProp(ConstCapeString(COBIATEXT("temperature")),
 			ConstCapeEmptyString(), T);
 		product.SetOverallProp(ConstCapeString(COBIATEXT("pressure")),
-			ConstCapeEmptyString(), P);
+			ConstCapeEmptyString(), _P);
 	}
 
 	void flashProduct(/*out*/ CapeArrayStringImpl _phaseIDs,
@@ -182,7 +224,7 @@ public:
 	}
 
 	CapeReal calConversion() {
-		return (inletBaseMolarFlow - molarFlow[base]) / inletBaseMolarFlow;												// [J/mol]
+		return (inletBaseMolarFlow - molarFlow[0]) / inletBaseMolarFlow;	// [J/mol]
 	}
 
 	//CAPEOPEN_1_2::ICapeIdentification

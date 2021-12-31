@@ -13,13 +13,27 @@
 #define unitDescription COBIATEXT("PFR with integrated reaction package")
 
 #ifdef _DEBUG
-#define unitName COBIATEXT("CO PMC Debug")
-// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A704A8
-#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x04,0xa8
-#else
-#define unitName COBIATEXT("CO PMC")
-// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A704FF
-#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x04,0xff
+	#ifdef _WIN64
+		#define unitName COBIATEXT("CO PMC x64 Debug")
+		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A704A9
+		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x04,0xa9
+	#else
+		#define unitName COBIATEXT("CO PMC x86 Debug")
+		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A704A8
+		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x04,0xa8
+	#endif
+#endif
+
+#ifndef _DEBUG
+	#ifdef _WIN64
+		#define unitName COBIATEXT("CO PMC x64")
+		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A704FF
+		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x04,0xff
+	#else
+		#define unitName COBIATEXT("CO PMC x86")
+		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A704AA
+		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x04,0xaa
+	#endif
 #endif
 
 using namespace COBIA;
@@ -51,15 +65,12 @@ class Unit :
 	// Members: Reaction Packages
 	ReactionPackagePtr reactionPackage;
 
-	// Members: Simulation Context
-	CAPEOPEN_1_2::CapeSimulationContext simulationContext; // Not Implemented
-
 	// Members: ThermoMaterial Properties
-	CAPEOPEN_1_2::CapeThermoMaterial feed1Material; // Migrate
+	CAPEOPEN_1_2::CapeThermoMaterial feed1Material;
 	CAPEOPEN_1_2::CapeThermoMaterial product1Material;
-	CapeArrayRealImpl feed1Flow;	// Migrate
+	CapeArrayRealImpl feed1Flow;
 	CapeArrayRealImpl product1Flow, feed1Enthalpy, product1Enthalpy;
-	CapeArrayRealImpl feed1phaseFraction, product1phaseFraction, T, P, X; //Migrate
+	CapeArrayRealImpl feed1phaseFraction, product1phaseFraction, T, P, X;
 
 	// Members: Flash Conditions
 	CapeArrayStringImpl product1PhaseIDs;
@@ -83,8 +94,8 @@ public:
 		registrar.putCapeVersion(COBIATEXT("1.1"));
 		registrar.putComponentVersion(projectVersion);
 		registrar.putAbout(COBIATEXT("Sample Unit Operation using COBIA."));
-		registrar.putVendorURL(COBIATEXT("www.polimi.it"));
-		// registrar.putProgId(COBIATEXT("Polimi.Unit"));
+		// registrar.putVendorURL(COBIATEXT(""));
+		// registrar.putProgId(COBIATEXT(""));
 		registrar.addCatID(CAPEOPEN::categoryId_UnitOperation);
 		registrar.addCatID(CAPEOPEN_1_2::categoryId_Component_1_2);
 		//registrar.putCreationFlags(CapePMCRegistationFlag_None);
@@ -130,11 +141,11 @@ public:
 
 		// Set parameter dimensionality
 		reactorLength->putDimensionality(0, 1);		// m
-		reactorVolume->putDimensionality(0, 3);		// m
-		reactorVolume->putDimensionality(8, 0);		// -
-		work->putDimensionality(0, 2);				// m
+		reactorVolume->putDimensionality(0, 3);		// m3
+		conversion->putDimensionality(8, 0);		// -
+		work->putDimensionality(0, 2);				// m2
 		work->putDimensionality(1, 1);				// kg
-		work->putDimensionality(2, -3);				// s
+		work->putDimensionality(2, -3);				// s-3
 		temperatureLow->putDimensionality(4, 1);	// K
 		temperatureHigh->putDimensionality(4, 1);	// K
 
@@ -193,18 +204,25 @@ public:
 
 		// Initiate Solver
 		SolverPtr solver = new Solver(this->product1, this->reactionPackage, this->paramCollection);
-		
-		// Solving Steps
-		solver->getInitialConditions();
-		solver->odeSolver();
-		solver->setProduct();
 		solver->flashProduct(product1PhaseIDs, product1FlashPhaseStatus);
 
 		// Set unit output params
 		conversion->putValue(solver->calConversion());
 
-		// Set energy output params - TODO: Set temperatureLow and temperatureHigh
+		// Set energy output params
 		energy->getCollection()[COBIATEXT("work")].putValue(solver->dH());
+		CapeReal high = 0;
+		CapeReal low = 10000;
+		for (size_t i = 0, j = solver->profile.size(); i < j; i++) {
+			if (solver->profile[i][3] > high) {
+				high = solver->profile[i][3];
+			}
+			if (solver->profile[i][3] < low) {
+				low = solver->profile[i][3];
+			}
+		}
+		energy->getCollection()[COBIATEXT("temperatureHigh")].putValue(high);
+		energy->getCollection()[COBIATEXT("temperatureLow")].putValue(low);
 	}
 
 	CapeBoolean Validate(/*out*/ CapeString message) {
@@ -310,7 +328,6 @@ public:
 	}
 	void putSimulationContext(/*in*/ CAPEOPEN_1_2::CapeSimulationContext context) {
 		// Storing a reference in case any COSE implementation is needed in future
-		this->simulationContext = context;
 		// For now an error is thrown
 		throw cape_open_error(COBIAERR_NotImplemented);
 	}
@@ -334,8 +351,6 @@ public:
 			p.Disconnect();
 		}
 		// In case a reference to the simulation context is stored, it too must be released at Terminate
-		simulationContext.clear();
-
 	}
 	CAPEOPEN_1_2::CapeEditResult Edit(CapeWindowId parent) {
 		// TODO
@@ -348,8 +363,6 @@ public:
 	void Save(/*in*/ CAPEOPEN_1_2::CapePersistWriter writer,/*in*/ CapeBoolean clearDirty) {
 		writer.Add(ConstCapeString(COBIATEXT("name")), name);
 		writer.Add(ConstCapeString(COBIATEXT("description")), description);
-		// TODO: Iterate over parameter collection
-		// and import parameter name using identification interface
 		writer.Add(ConstCapeString(COBIATEXT("reactorLength")), reactorLength->getValue());
 		writer.Add(ConstCapeString(COBIATEXT("reactorVolume")), reactorVolume->getValue());
 		writer.Add(ConstCapeString(COBIATEXT("conversion")), conversion->getValue());
@@ -365,8 +378,6 @@ public:
 	void Load(/*in*/ CAPEOPEN_1_2::CapePersistReader reader) {
 		reader.GetString(ConstCapeString(COBIATEXT("name")), name);
 		reader.GetString(ConstCapeString(COBIATEXT("description")), description);
-		// TODO: Iterate over parameter collection
-		// and import parameter name using identification interface
 		reactorLength->putValue(reader.GetReal(ConstCapeString(COBIATEXT("reactorLength"))));
 		reactorVolume->putValue(reader.GetReal(ConstCapeString(COBIATEXT("reactorVolume"))));
 		conversion->putValue(reader.GetReal(ConstCapeString(COBIATEXT("conversion"))));
