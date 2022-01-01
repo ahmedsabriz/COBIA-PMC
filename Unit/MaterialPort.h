@@ -18,7 +18,6 @@ class MaterialPort :
 	CAPEOPEN_1_2::CapePortDirection direction;	
 
 	CAPEOPEN_1_2::CapeThermoMaterial connectedMaterial;
-	CapeBoolean connected;
 	CapeStreamSide side;
 
 public:
@@ -32,7 +31,6 @@ public:
 		CAPEOPEN_1_2::CapePortDirection _direction) :
 		unitName(_unitName), unitValidationStatus(_unitValidationStatus),
 		portName(_portName), primary(_primary), direction(_direction) {
-		connected = false;
 		side = CapeStreamSide::CAPE_UNSELECTED;
 	}
 
@@ -41,14 +39,6 @@ public:
 
 	CapeBoolean isPrimary() {
 		return primary;
-	}
-
-	CapeBoolean isConnected() {
-		return connected;
-	}
-
-	void ignoreOptionalStream() {
-		this->connected = false;
 	}
 
 	CAPEOPEN_1_2::CapeThermoMaterial getMaterial() {
@@ -87,12 +77,10 @@ public:
 		}
 		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 		connectedMaterial = newConnectedMaterial;
-		this->connected = true;
 	}
 	void Disconnect() {
 		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 		connectedMaterial.clear();
-		this->connected = false;
 	}
 };
 

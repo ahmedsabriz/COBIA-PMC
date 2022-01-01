@@ -57,31 +57,29 @@ public:
 					message = COBIATEXT("Port ") + _portName + COBIATEXT(" is not connected");
 					return false;
 				}
-				else {
-					portPtr->ignoreOptionalStream();
-				}
 			}
-
-			if (portPtr->isConnected() && portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL) {
-				CAPEOPEN_1_2::CapeThermoCompounds compounds(connectedObject);
-				// Get compound list for from first stream as reference
-				if (refCompIDs.empty()) {
-					compounds.GetCompoundList(refCompIDs, formulae, names,
-						boilTemps, molecularWeights, casNumbers);
-				}
-				// Compare all other streams with it
-				compounds.GetCompoundList(compIDs, formulae, names, boilTemps, molecularWeights, casNumbers);
-				sameCompList = (refCompIDs.size() == compIDs.size());
-				for (size_t i = 0; (i < compIDs.size()) && (sameCompList); i++) {
-					sameCompList = (compIDs[i].compare(refCompIDs[i]) == 0);
-				}
-				if (!sameCompList) {
-					message = COBIATEXT("Connected material streams expose inconsistent compound lists");
-					return false;
-				}
-				else if (refCompIDs.empty()) {
-					message = COBIATEXT("Connected material streams expose zero compound");
-					return false;
+			else {
+				if (portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL) {
+					CAPEOPEN_1_2::CapeThermoCompounds compounds(connectedObject);
+					// Get compound list for from first stream as reference
+					if (refCompIDs.empty()) {
+						compounds.GetCompoundList(refCompIDs, formulae, names,
+							boilTemps, molecularWeights, casNumbers);
+					}
+					// Compare all other streams with it
+					compounds.GetCompoundList(compIDs, formulae, names, boilTemps, molecularWeights, casNumbers);
+					sameCompList = (refCompIDs.size() == compIDs.size());
+					for (size_t i = 0; (i < compIDs.size()) && (sameCompList); i++) {
+						sameCompList = (compIDs[i].compare(refCompIDs[i]) == 0);
+					}
+					if (!sameCompList) {
+						message = COBIATEXT("Connected material streams expose inconsistent compound lists");
+						return false;
+					}
+					else if (compIDs.empty()) {
+						message = COBIATEXT("Connected material streams expose zero compound");
+						return false;
+					}
 				}
 			}
 		}
@@ -90,18 +88,34 @@ public:
 
 	CapeBoolean validateHeatExchangerInletOutlet(/*out*/ CapeString message) {
 
-		// 	Validate that each optional inlet has an output
+		// 	Validate that each optional inlet has an outlet
 		MaterialPortPtr portPtr;
 		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
 			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
 			if (
 				!portPtr->isPrimary() &&
-				portPtr->isConnected() &&
+				portPtr->getConnectedObject() &&
 				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
 				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_INLET
 				) {
-				if (!static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i + 1))->isConnected()) {
-					message = COBIATEXT("An inlet material stream is missing an output connection");
+				if (!portCollection->Item(i + 1).getConnectedObject()) {
+					message = COBIATEXT("An inlet material stream is missing an outlet connection");
+					return false;
+				}
+			}
+		}
+
+		// 	Validate that each optional outlet has an inlet
+		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
+			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
+			if (
+				!portPtr->isPrimary() &&
+				portPtr->getConnectedObject() &&
+				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
+				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET
+				) {
+				if (!portCollection->Item(i - 1).getConnectedObject()) {
+					message = COBIATEXT("An outlet material stream is missing an inlet connection");
 					return false;
 				}
 			}
@@ -127,7 +141,7 @@ public:
 		MaterialPortPtr portPtr;
 		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
 			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
-			if (portPtr->isConnected() && portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
+			if (portPtr->getConnectedObject() && portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
 				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
 				material = portPtr->getMaterial();
 				CAPEOPEN_1_2::CapeThermoPhases phases(material);

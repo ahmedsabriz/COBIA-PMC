@@ -31,7 +31,7 @@ public:
 		MaterialPortPtr portPtr, inletPtr;
 		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
 			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
-			if (portPtr->isConnected() && portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
+			if (portPtr->getConnectedObject() && portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
 				inletPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i-1));
 				portPtr->getMaterial().CopyFromMaterial(inletPtr->getMaterial());
 			}
@@ -56,7 +56,7 @@ public:
 		MaterialPortPtr portPtr;
 		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
 			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
-			if (portPtr->isConnected() &&
+			if (portPtr->getConnectedObject() &&
 				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
 				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
 
