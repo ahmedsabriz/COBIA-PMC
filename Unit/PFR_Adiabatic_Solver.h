@@ -4,7 +4,7 @@
 #include "ReactionPackage.h"
 #include "Reaction.h"
 
-using namespace boost::numeric::odeint;
+
 using namespace COBIA;
 
 
@@ -169,9 +169,8 @@ public:
 
 		// Integrate with constant step
 		// Perfromance optimisation ignored for Proof of Concept
-		using namespace std::placeholders;
-		integrate_const(runge_kutta4<state_type>(),
-			std::bind(&Solver::pfr, this, _1, _2, _3),
+		boost::numeric::odeint::integrate_const(boost::numeric::odeint::runge_kutta4<state_type>(),
+			std::bind(&Solver::pfr, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3),
 			y, 0.0, this->reactorLength.getValue(), dz, observer(profile, grid));
 		
 		setProduct(y, P);
