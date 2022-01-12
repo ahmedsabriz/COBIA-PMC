@@ -81,7 +81,8 @@ public:
 		throw cape_open_error(COBIAERR_Denied);
 	}
 	void getComponentDescription(/*out*/ CapeString desc) {
-		desc = COBIATEXT("ODE Solver for mass and energy balance");
+		// TODO
+		desc = COBIATEXT("Solver Class");
 	}
 	void putComponentDescription(/*in*/ CapeString desc) {
 		throw cape_open_error(COBIAERR_Denied);

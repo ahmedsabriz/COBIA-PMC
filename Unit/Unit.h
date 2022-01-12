@@ -1,22 +1,20 @@
 #pragma once
 #include <COBIA.h>
 #include "MaterialPort.h"
+#include "OptionParameter.h"
 #include "PortCollection.h"
 #include "ParameterCollection.h"
-#include "Helpers.h"
 #include "Validator.h"
 #include "Solver.h"
 
-#define projectVersion COBIATEXT("0.5.0")
-#define unitDescription COBIATEXT("MultiStream Heat Exchanger")
 
 #ifdef _DEBUG
 	#ifdef _WIN64
-		#define unitName COBIATEXT("CO PMC x64 Debug")
+		#define unitName COBIATEXT("CO MSHEX x64 Debug")
 		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705A9
 		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xa9
 	#else
-		#define unitName COBIATEXT("CO PMC x86 Debug")
+		#define unitName COBIATEXT("CO MSHEX x86 Debug")
 		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705A8
 		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xa8
 	#endif
@@ -24,15 +22,17 @@
 
 #ifndef _DEBUG
 	#ifdef _WIN64
-		#define unitName COBIATEXT("CO PMC x64")
+		#define unitName COBIATEXT("CO MSHEX x64")
 		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705FF
 		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xff
 	#else
-		#define unitName COBIATEXT("CO PMC x86")
+		#define unitName COBIATEXT("CO MSHEX x86")
 		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705AA
 		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xaa
 	#endif
 #endif
+
+#define unitDescription COBIATEXT("MultiStream Heat Exchanger")
 
 using namespace COBIA;
 
@@ -52,6 +52,9 @@ class Unit :
 
 	// Members: Ports and Parameters
 	MaterialPortPtr in1, in2, in3, in4, in5, out1, out2, out3, out4, out5;
+
+	CapeArrayStringImpl sideOptions;
+	OptionParameterPtr in1side, in2side, in3side, in4side, in5side;
 
 	// Members: Collections
 	PortCollectionPtr portCollection;
@@ -78,7 +81,7 @@ public:
 		registrar.putName(unitName);
 		registrar.putDescription(unitDescription);
 		registrar.putCapeVersion(COBIATEXT("1.1"));
-		registrar.putComponentVersion(projectVersion);
+		registrar.putComponentVersion(COBIATEXT("0.5.0"));
 		registrar.putAbout(COBIATEXT("Sample Unit Operation using COBIA."));
 		registrar.putVendorURL(COBIATEXT("www.polimi.it"));
 		// registrar.putProgId(COBIATEXT("Polimi.Unit"));
@@ -93,21 +96,33 @@ public:
 		description(unitDescription),
 		validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED),
 		dirty(false),
-		// Inlet Stream should be followed by its outlet to reserve indexing. Energy streams should be placed at the end
 		in1(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 1"), true, CAPEOPEN_1_2::CAPE_INLET)),
-		out1(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 1"), true, CAPEOPEN_1_2::CAPE_OUTLET)),
 		in2(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 2"), true, CAPEOPEN_1_2::CAPE_INLET)),
-		out2(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 2"), true, CAPEOPEN_1_2::CAPE_OUTLET)),
 		in3(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 3"), false, CAPEOPEN_1_2::CAPE_INLET)),
-		out3(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 3"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
 		in4(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 4"), false, CAPEOPEN_1_2::CAPE_INLET)),
-		out4(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 4"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
 		in5(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 5"), false, CAPEOPEN_1_2::CAPE_INLET)),
+		out1(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 1"), true, CAPEOPEN_1_2::CAPE_OUTLET)),
+		out2(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 2"), true, CAPEOPEN_1_2::CAPE_OUTLET)),
+		out3(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 3"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
+		out4(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 4"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
 		out5(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 5"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
+		sideOptions(3),
+		in1side(new OptionParameter(name, validationStatus, dirty, sideOptions, COBIATEXT("Inlet 1 Side"))),
+		in2side(new OptionParameter(name, validationStatus, dirty, sideOptions, COBIATEXT("Inlet 2 Side"))),
+		in3side(new OptionParameter(name, validationStatus, dirty, sideOptions, COBIATEXT("Inlet 3 Side"))),
+		in4side(new OptionParameter(name, validationStatus, dirty, sideOptions, COBIATEXT("Inlet 4 Side"))),
+		in5side(new OptionParameter(name, validationStatus, dirty, sideOptions, COBIATEXT("Inlet 5 Side"))),
 		portCollection(new PortCollection(name)),
 		paramCollection(new ParameterCollection(name)) {
 
+		// Stream Side Options
+		sideOptions[0] = COBIATEXT("Ignored");
+		sideOptions[1] = COBIATEXT("Hot");
+		sideOptions[2] = COBIATEXT("Cold");
+
 		// Add ports to port collection
+		// Inlet Stream should be followed by its outlet to reserve indexing.
+		// Energy streams should be placed at the end
 		portCollection->addPort(in1);
 		portCollection->addPort(out1);
 		portCollection->addPort(in2);
@@ -118,6 +133,13 @@ public:
 		portCollection->addPort(out4);
 		portCollection->addPort(in5);
 		portCollection->addPort(out5);
+
+		// Add parameters to port collection
+		paramCollection->addParameter(in1side);
+		paramCollection->addParameter(in2side);
+		paramCollection->addParameter(in3side);
+		paramCollection->addParameter(in4side);
+		paramCollection->addParameter(in5side);
 
 		// Prepare T & P flash specifications for products flash
 		// specification format:
@@ -169,13 +191,11 @@ public:
 			return false;
 		}
 	}
-
 	void Calculate() {	
 		// Check validation status before calculation
 		if (validationStatus != CAPEOPEN_1_2::CAPE_VALID) {
 			throw cape_open_error(COBIATEXT("Unit is not in a valid state"));
 		}
-
 		// Initiate Solver
 		SolverPtr solver = new Solver(portCollection);
 		solver->flashProduct(productsPhaseIDs, productsPhaseStatus, flashCond1, flashCond2);
@@ -194,12 +214,12 @@ public:
 	}
 
 	void Initialize() {
-		// * The PME will order the PMC to get initialized through this method.
-		// ** Any initialisation that could fail must be placed here.
-		// *** Initialize is guaranteed to be the first method called by the client
+		// 1. The PME will order the PMC to get initialized through this method.
+		// 2. Any initialisation that could fail must be placed here.
+		// 3. Initialize is guaranteed to be the first method called by the client
 		// (except low level methods such as class constructors or initialization persistence methods).
-		// **** Initialize has to be called once when the PMC is instantiated in a particular flowsheet.
-		// ***** When the initialization fails, before signalling an error,
+		// 4. Initialize has to be called once when the PMC is instantiated in a particular flowsheet.
+		// 5. When the initialization fails, before signalling an error,
 		// the PMC must free all the resources that were allocated before the failure occurred.
 		// When the PME receives this error, it may not use the PMC anymore.
 		// The method terminate of the current interface must not either be called.
@@ -212,10 +232,8 @@ public:
 			p.Disconnect();
 		}
 		// In case a reference to the simulation context is stored, it too must be released at Terminate
-		// simulationContext.clear();
 	}
 	CAPEOPEN_1_2::CapeEditResult Edit(CapeWindowId parent) {
-		// TODO
 		throw cape_open_error(COBIAERR_NotImplemented);
 	}
 

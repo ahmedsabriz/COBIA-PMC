@@ -31,13 +31,13 @@
     <ClInclude Include="ParameterCollection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Helpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Solver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Validator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="OptionParameter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

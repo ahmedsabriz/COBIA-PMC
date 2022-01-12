@@ -94,7 +94,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE);$(USERPROFILE)\source\repos\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -109,7 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE);$(USERPROFILE)\source\repos\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -124,7 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE);$(USERPROFILE)\source\repos\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,7 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE);$(USERPROFILE)\source\repos\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,8 +153,8 @@
     <ClCompile Include="Unit.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="OptionParameter.h" />
     <ClInclude Include="Validator.h" />
-    <ClInclude Include="Helpers.h" />
     <ClInclude Include="MaterialPort.h" />
     <ClInclude Include="ParameterCollection.h" />
     <ClInclude Include="PortCollection.h" />

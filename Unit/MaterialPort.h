@@ -1,6 +1,5 @@
 #pragma once
 #include <COBIA.h>
-#include "Helpers.h"
 
 using namespace COBIA;
 
@@ -18,7 +17,6 @@ class MaterialPort :
 	CAPEOPEN_1_2::CapePortDirection direction;	
 
 	CAPEOPEN_1_2::CapeThermoMaterial connectedMaterial;
-	CapeStreamSide side;
 
 public:
 
@@ -31,7 +29,6 @@ public:
 		CAPEOPEN_1_2::CapePortDirection _direction) :
 		unitName(_unitName), unitValidationStatus(_unitValidationStatus),
 		portName(_portName), primary(_primary), direction(_direction) {
-		side = CapeStreamSide::CAPE_UNSELECTED;
 	}
 
 	~MaterialPort() {
