@@ -25,7 +25,7 @@ class OptionParameter :
 public:
 
 	const CapeStringImpl getDescriptionForErrorSource() {
-		return paramName + COBIATEXT("Parameter of ") + unitName;
+		return COBIATEXT("Parameter \"") + paramName + COBIATEXT("\" of ") + unitName;
 	}
 
 	OptionParameter(CapeStringImpl& _unitName, CAPEOPEN_1_2::CapeValidationStatus& _unitValidationStatus,
@@ -43,37 +43,29 @@ public:
 	}
 
 	//CAPEOPEN_1_2::ICapeIdentification
-	
 	void getComponentName(/*out*/ CapeString name) {
 		name = this->paramName;
 	}
-	
 	void putComponentName(/*in*/ CapeString name) {
 		throw cape_open_error(COBIAERR_Denied);
 	}
-	
 	void getComponentDescription(/*out*/ CapeString desc) {
-		desc = COBIATEXT("Option Parameter Array");
+		desc = COBIATEXT("Option Parameter");
 	}
-	
 	void putComponentDescription(/*in*/ CapeString desc) {
 		throw cape_open_error(COBIAERR_Denied);
 	}
 	
 	//CAPEOPEN_1_2::ICapeParameter
-	
 	CAPEOPEN_1_2::CapeValidationStatus getValStatus() {
 		return paramValidationStatus;
 	}
-	
 	CAPEOPEN_1_2::CapeParamMode getMode() {
 		return CAPEOPEN_1_2::CAPE_INPUT;
 	}
-	
 	CAPEOPEN_1_2::CapeParamType getType() {
 		return CAPEOPEN_1_2::CAPE_PARAMETER_STRING;
 	}
-	
 	CapeBoolean Validate(/*out*/ CapeString message) {
 		// First validation is for type and mode
 		if (getType() != CAPEOPEN_1_2::CAPE_PARAMETER_STRING || getMode() != CAPEOPEN_1_2::CAPE_INPUT) {
@@ -82,7 +74,6 @@ public:
 		}
 		return true;
 	}
-	
 	void Reset() {
 		this->value = defaultValue;
 		dirty = true;

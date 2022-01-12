@@ -94,7 +94,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -109,7 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -124,7 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,7 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -154,6 +154,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="OptionParameter.h" />
+    <ClInclude Include="RealParameter.h" />
     <ClInclude Include="Validator.h" />
     <ClInclude Include="MaterialPort.h" />
     <ClInclude Include="ParameterCollection.h" />

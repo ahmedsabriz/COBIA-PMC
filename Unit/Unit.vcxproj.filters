@@ -40,5 +40,8 @@
     <ClInclude Include="OptionParameter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="RealParameter.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -13,8 +13,8 @@ class MaterialPort :
 	CAPEOPEN_1_2::CapeValidationStatus &unitValidationStatus;
 
 	CapeStringImpl portName;
+	CAPEOPEN_1_2::CapePortDirection direction;
 	CapeBoolean primary;
-	CAPEOPEN_1_2::CapePortDirection direction;	
 
 	CAPEOPEN_1_2::CapeThermoMaterial connectedMaterial;
 
@@ -25,10 +25,9 @@ public:
 	}
 
 	MaterialPort(CapeStringImpl& _unitName, CAPEOPEN_1_2::CapeValidationStatus& _unitValidationStatus,
-		const COBIACHAR* _portName, CapeBoolean _primary,
-		CAPEOPEN_1_2::CapePortDirection _direction) :
+		const COBIACHAR* _portName, CAPEOPEN_1_2::CapePortDirection _direction, CapeBoolean _primary) :
 		unitName(_unitName), unitValidationStatus(_unitValidationStatus),
-		portName(_portName), primary(_primary), direction(_direction) {
+		portName(_portName), direction(_direction), primary(_primary) {
 	}
 
 	~MaterialPort() {

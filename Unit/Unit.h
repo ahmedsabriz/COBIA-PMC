@@ -1,6 +1,7 @@
 #pragma once
 #include <COBIA.h>
 #include "MaterialPort.h"
+#include "RealParameter.h"
 #include "OptionParameter.h"
 #include "PortCollection.h"
 #include "ParameterCollection.h"
@@ -9,27 +10,27 @@
 
 
 #ifdef _DEBUG
-	#ifdef _WIN64
-		#define unitName COBIATEXT("CO MSHEX x64 Debug")
-		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705A9
-		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xa9
-	#else
-		#define unitName COBIATEXT("CO MSHEX x86 Debug")
-		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705A8
-		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xa8
-	#endif
+#ifdef _WIN64
+#define unitName COBIATEXT("CO MSHEX x64 Debug")
+// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705A9
+#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xa9
+#else
+#define unitName COBIATEXT("CO MSHEX x86 Debug")
+// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705A8
+#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xa8
+#endif
 #endif
 
 #ifndef _DEBUG
-	#ifdef _WIN64
-		#define unitName COBIATEXT("CO MSHEX x64")
-		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705FF
-		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xff
-	#else
-		#define unitName COBIATEXT("CO MSHEX x86")
-		// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705AA
-		#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xaa
-	#endif
+#ifdef _WIN64
+#define unitName COBIATEXT("CO MSHEX x64")
+// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705FF
+#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xff
+#else
+#define unitName COBIATEXT("CO MSHEX x86")
+// Class UUID = AAF02E89-291C-4D7C-836F-10EC28A705AA
+#define unitUUID 0xaa,0xf0,0x2e,0x89,0x29,0x1c,0x4d,0x7c,0x83,0x6f,0x10,0xec,0x28,0xa7,0x05,0xaa
+#endif
 #endif
 
 #define unitDescription COBIATEXT("MultiStream Heat Exchanger")
@@ -74,7 +75,7 @@ public:
 
 	// Registration info
 	static const CapeUUID getObjectUUID() {
-		return CapeUUID{unitUUID};
+		return CapeUUID{ unitUUID };
 	}
 
 	static void Register(CapePMCRegistrar registrar) {
@@ -91,21 +92,21 @@ public:
 	}
 
 	// Constructor and members initialisation
-	Unit()  :
+	Unit() :
 		name(unitName),
 		description(unitDescription),
 		validationStatus(CAPEOPEN_1_2::CAPE_NOT_VALIDATED),
 		dirty(false),
-		in1(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 1"), true, CAPEOPEN_1_2::CAPE_INLET)),
-		in2(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 2"), true, CAPEOPEN_1_2::CAPE_INLET)),
-		in3(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 3"), false, CAPEOPEN_1_2::CAPE_INLET)),
-		in4(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 4"), false, CAPEOPEN_1_2::CAPE_INLET)),
-		in5(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 5"), false, CAPEOPEN_1_2::CAPE_INLET)),
-		out1(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 1"), true, CAPEOPEN_1_2::CAPE_OUTLET)),
-		out2(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 2"), true, CAPEOPEN_1_2::CAPE_OUTLET)),
-		out3(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 3"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
-		out4(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 4"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
-		out5(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 5"), false, CAPEOPEN_1_2::CAPE_OUTLET)),
+		in1(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 1"), CAPEOPEN_1_2::CAPE_INLET, true)),
+		in2(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 2"), CAPEOPEN_1_2::CAPE_INLET, true)),
+		in3(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 3"), CAPEOPEN_1_2::CAPE_INLET, false)),
+		in4(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 4"), CAPEOPEN_1_2::CAPE_INLET, false)),
+		in5(new MaterialPort(name, validationStatus, COBIATEXT("Inlet 5"), CAPEOPEN_1_2::CAPE_INLET, false)),
+		out1(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 1"), CAPEOPEN_1_2::CAPE_OUTLET, true)),
+		out2(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 2"), CAPEOPEN_1_2::CAPE_OUTLET, true)),
+		out3(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 3"), CAPEOPEN_1_2::CAPE_OUTLET, false)),
+		out4(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 4"), CAPEOPEN_1_2::CAPE_OUTLET, false)),
+		out5(new MaterialPort(name, validationStatus, COBIATEXT("Outlet 5"), CAPEOPEN_1_2::CAPE_OUTLET, false)),
 		sideOptions(3),
 		in1side(new OptionParameter(name, validationStatus, dirty, sideOptions, COBIATEXT("Inlet 1 Side"))),
 		in2side(new OptionParameter(name, validationStatus, dirty, sideOptions, COBIATEXT("Inlet 2 Side"))),
@@ -116,7 +117,7 @@ public:
 		paramCollection(new ParameterCollection(name)) {
 
 		// Stream Side Options
-		sideOptions[0] = COBIATEXT("Ignored");
+		sideOptions[0] = COBIATEXT("Ignore");
 		sideOptions[1] = COBIATEXT("Hot");
 		sideOptions[2] = COBIATEXT("Cold");
 
@@ -191,7 +192,7 @@ public:
 			return false;
 		}
 	}
-	void Calculate() {	
+	void Calculate() {
 		// Check validation status before calculation
 		if (validationStatus != CAPEOPEN_1_2::CAPE_VALID) {
 			throw cape_open_error(COBIATEXT("Unit is not in a valid state"));
@@ -241,10 +242,30 @@ public:
 	void Save(/*in*/ CAPEOPEN_1_2::CapePersistWriter writer,/*in*/ CapeBoolean clearDirty) {
 		writer.Add(ConstCapeString(COBIATEXT("name")), name);
 		writer.Add(ConstCapeString(COBIATEXT("description")), description);
-		// TODO: Iterate over parameter collection
-		// and import parameter name using identification interface
-		// writer.Add(ConstCapeString(COBIATEXT("param")), param->getValue());
-
+		for (size_t i = 0, count = paramCollection->getCount(); i < count; i++) {
+			CapeString paramName(new CapeStringImpl);
+			switch (paramCollection->Item(i).getType()) {
+			case CAPEOPEN_1_2::CAPE_PARAMETER_REAL:
+			{
+				RealParameter* realParam = static_cast<RealParameter*> ((CAPEOPEN_1_2::ICapeParameter*)(paramCollection->Item(i)));
+				realParam->getComponentName(paramName);
+				writer.Add(paramName, realParam->getValue());
+			}
+			break;
+			case CAPEOPEN_1_2::CAPE_PARAMETER_STRING:
+			{
+				OptionParameter* stringParam = static_cast<OptionParameter*> ((CAPEOPEN_1_2::ICapeParameter*)(paramCollection->Item(i)));
+				stringParam->getComponentName(paramName);
+				CapeString value(new CapeStringImpl);
+				stringParam->getValue(value);
+				writer.Add(paramName, value);
+			}
+			break;
+			default:
+				throw cape_open_error(COBIAERR_UnknownError);
+				break;
+			}
+		}
 		if (clearDirty) {
 			dirty = false;
 		}
@@ -252,9 +273,30 @@ public:
 	void Load(/*in*/ CAPEOPEN_1_2::CapePersistReader reader) {
 		reader.GetString(ConstCapeString(COBIATEXT("name")), name);
 		reader.GetString(ConstCapeString(COBIATEXT("description")), description);
-		// TODO: Iterate over parameter collection
-		// and import parameter name using identification interface
-		// param->putValue(reader.GetReal(ConstCapeString(COBIATEXT("param"))));
+		for (size_t i = 0, count = paramCollection->getCount(); i < count; i++) {
+			CapeString paramName(new CapeStringImpl);
+			switch (paramCollection->Item(i).getType()) {
+			case CAPEOPEN_1_2::CAPE_PARAMETER_REAL:
+			{
+				RealParameter* realParam = static_cast<RealParameter*> ((CAPEOPEN_1_2::ICapeParameter*)(paramCollection->Item(i)));
+				realParam->getComponentName(paramName);
+				realParam->putValue(reader.GetReal(paramName));
+			}
+			break;
+			case CAPEOPEN_1_2::CAPE_PARAMETER_STRING:
+			{
+				OptionParameter* stringParam = static_cast<OptionParameter*> ((CAPEOPEN_1_2::ICapeParameter*)(paramCollection->Item(i)));
+				stringParam->getComponentName(paramName);
+				CapeString value(new CapeStringImpl);
+				reader.GetString(paramName, value);
+				stringParam->putValue(value);
+			}
+			break;
+			default:
+				throw cape_open_error(COBIAERR_UnknownError);
+				break;
+			}
+		}
 	}
 	CapeBoolean getIsDirty() {
 		return dirty;
