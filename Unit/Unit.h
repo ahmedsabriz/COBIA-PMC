@@ -245,23 +245,21 @@ public:
 
 		CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeParameter> collection(paramCollection);
 		for (CAPEOPEN_1_2::CapeParameter param : collection) {
-
-			CapeString paramName(new CapeStringImpl);
+			
+			CapeStringImpl paramName;
+			CAPEOPEN_1_2::CapeIdentification interfaceID(param);
+			interfaceID.getComponentName(paramName);
 
 			switch (param.getType()) {
 			case CAPEOPEN_1_2::CAPE_PARAMETER_REAL:
 			{
-				ParameterReal* realParam = static_cast<ParameterReal*> ((CAPEOPEN_1_2::ICapeParameter*)param);
-				realParam->getComponentName(paramName);
-				writer.Add(paramName, realParam->getValue());
+				writer.Add(paramName, (static_cast<ParameterReal*> ((CAPEOPEN_1_2::ICapeParameter*)param))->getValue());
 			}
 			break;
 			case CAPEOPEN_1_2::CAPE_PARAMETER_STRING:
 			{
-				ParameterOption* stringParam = static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)param);
-				stringParam->getComponentName(paramName);
 				CapeString value(new CapeStringImpl);
-				stringParam->getValue(value);
+				(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)param))->getValue(value);
 				writer.Add(paramName, value);
 			}
 			break;
@@ -280,23 +278,21 @@ public:
 		CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeParameter> collection(paramCollection);
 		for (CAPEOPEN_1_2::CapeParameter param : collection) {
 
-			CapeString paramName(new CapeStringImpl);
+			CapeStringImpl paramName;
+			CAPEOPEN_1_2::CapeIdentification interfaceID(param);
+			interfaceID.getComponentName(paramName);
 
 			switch (param.getType()) {
 			case CAPEOPEN_1_2::CAPE_PARAMETER_REAL:
 			{
-				ParameterReal* realParam = static_cast<ParameterReal*> ((CAPEOPEN_1_2::ICapeParameter*)param);
-				realParam->getComponentName(paramName);
-				realParam->putValue(reader.GetReal(paramName));
+				(static_cast<ParameterReal*> ((CAPEOPEN_1_2::ICapeParameter*)param))->putValue(reader.GetReal(paramName));
 			}
 			break;
 			case CAPEOPEN_1_2::CAPE_PARAMETER_STRING:
 			{
-				ParameterOption* stringParam = static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)param);
-				stringParam->getComponentName(paramName);
 				CapeString value(new CapeStringImpl);
 				reader.GetString(paramName, value);
-				stringParam->putValue(value);
+				(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)param))->putValue(value);
 			}
 			break;
 			default:
