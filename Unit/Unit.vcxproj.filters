@@ -37,10 +37,13 @@
     <ClInclude Include="Validator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="OptionParameter.h">
+    <ClInclude Include="Parameter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RealParameter.h">
+    <ClInclude Include="ParameterOption.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ParameterReal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
