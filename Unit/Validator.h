@@ -1,6 +1,6 @@
 #pragma once
 #include <COBIA.h>
-#include "PortCollection.h"
+#include "Collection.h"
 #include "MaterialPort.h"
 
 using namespace COBIA;
@@ -21,7 +21,8 @@ class Validator :
 	public CAPEOPEN_1_2::CapeIdentificationAdapter<Validator> {
 	
 	// Members
-	PortCollectionPtr& portCollection;
+	CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>& portCollection;
+	CollectionPtr<CAPEOPEN_1_2::CapeParameter, ParameterOptionPtr>& paramCollection;
 
 public:
 
@@ -29,7 +30,9 @@ public:
 		return COBIATEXT("Validator");
 	}
 
-	Validator(PortCollectionPtr& _portCollection) : portCollection(_portCollection) {
+	Validator(CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>& _portCollection,
+		CollectionPtr<CAPEOPEN_1_2::CapeParameter, ParameterOptionPtr>& _paramCollection) :
+		portCollection(_portCollection), paramCollection(_paramCollection){
 	}
 
 	~Validator() {
@@ -98,10 +101,10 @@ public:
 				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
 				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_INLET
 				) {
-				if (!portCollection->Item(i + 1).getConnectedObject()) {
+				/*if (!portCollection->Item(i + 1).getConnectedObject()) {
 					message = COBIATEXT("An inlet material stream is missing an outlet connection");
 					return false;
-				}
+				}*/
 			}
 		}
 

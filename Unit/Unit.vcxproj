@@ -94,7 +94,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -109,7 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -124,7 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -139,7 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,13 +153,12 @@
     <ClCompile Include="Unit.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Collection.h" />
     <ClInclude Include="Parameter.h" />
     <ClInclude Include="ParameterOption.h" />
     <ClInclude Include="ParameterReal.h" />
     <ClInclude Include="Validator.h" />
     <ClInclude Include="MaterialPort.h" />
-    <ClInclude Include="ParameterCollection.h" />
-    <ClInclude Include="PortCollection.h" />
     <ClInclude Include="Solver.h" />
     <ClInclude Include="Unit.h" />
   </ItemGroup>

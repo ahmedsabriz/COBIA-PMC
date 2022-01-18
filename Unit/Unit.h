@@ -3,8 +3,7 @@
 #include "MaterialPort.h"
 #include "ParameterReal.h"
 #include "ParameterOption.h"
-#include "PortCollection.h"
-#include "ParameterCollection.h"
+#include "Collection.h"
 #include "Validator.h"
 #include "Solver.h"
 
@@ -53,13 +52,16 @@ class Unit :
 
 	// Members: Ports and Parameters
 	MaterialPortPtr in1, in2, in3, in4, in5, out1, out2, out3, out4, out5;
-
 	CapeArrayStringImpl sideOptions;
 	ParameterOptionPtr in1side, in2side, in3side, in4side, in5side;
 
 	// Members: Collections
-	PortCollectionPtr portCollection;
-	ParameterCollectionPtr paramCollection;
+	CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr> portCollection;
+	CollectionPtr<CAPEOPEN_1_2::CapeParameter, ParameterOptionPtr> paramCollection;
+
+	// Validator and Solver
+	ValidatorPtr validator;
+	SolverPtr solver;
 
 	// Flash arguments
 	std::vector<CapeArrayStringImpl> productsPhaseIDs;
@@ -113,8 +115,9 @@ public:
 		in3side(new ParameterOption(name, validationStatus, dirty, COBIATEXT("Inlet 3 Side"), sideOptions)),
 		in4side(new ParameterOption(name, validationStatus, dirty, COBIATEXT("Inlet 4 Side"), sideOptions)),
 		in5side(new ParameterOption(name, validationStatus, dirty, COBIATEXT("Inlet 5 Side"), sideOptions)),
-		portCollection(new PortCollection(name)),
-		paramCollection(new ParameterCollection(name)) {
+		portCollection(new Collection<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr> (name)),
+		paramCollection(new Collection<CAPEOPEN_1_2::CapeParameter, ParameterOptionPtr>(name)),
+		validator(new Validator(portCollection, paramCollection)) {
 
 		// Stream Side Options
 		sideOptions[0] = COBIATEXT("Ignore");
@@ -124,23 +127,23 @@ public:
 		// Add ports to port collection
 		// Inlet Stream should be followed by its outlet to reserve indexing.
 		// Energy streams should be placed at the end
-		portCollection->addPort(in1);
-		portCollection->addPort(out1);
-		portCollection->addPort(in2);
-		portCollection->addPort(out2);
-		portCollection->addPort(in3);
-		portCollection->addPort(out3);
-		portCollection->addPort(in4);
-		portCollection->addPort(out4);
-		portCollection->addPort(in5);
-		portCollection->addPort(out5);
+		portCollection->addItem(in1);
+		portCollection->addItem(out1);
+		portCollection->addItem(in2);
+		portCollection->addItem(out2);
+		portCollection->addItem(in3);
+		portCollection->addItem(out3);
+		portCollection->addItem(in4);
+		portCollection->addItem(out4);
+		portCollection->addItem(in5);
+		portCollection->addItem(out5);
 
 		// Add parameters to port collection
-		paramCollection->addParameter(in1side);
-		paramCollection->addParameter(in2side);
-		paramCollection->addParameter(in3side);
-		paramCollection->addParameter(in4side);
-		paramCollection->addParameter(in5side);
+		paramCollection->addItem(in1side);
+		paramCollection->addItem(in2side);
+		paramCollection->addItem(in3side);
+		paramCollection->addItem(in4side);
+		paramCollection->addItem(in5side);
 
 		// Prepare T & P flash specifications for products flash
 		// specification format:
@@ -181,7 +184,6 @@ public:
 		return validationStatus;
 	}
 	CapeBoolean Validate(/*out*/ CapeString message) {
-		ValidatorPtr validator = new Validator(portCollection);
 		if (validator->validateMaterialPorts(message) && validator->validateHeatExchangerInletOutlet(message)) {
 			validator->preparePhaseIDs(productsPhaseIDs, productsPhaseStatus);
 			validationStatus = CAPEOPEN_1_2::CAPE_VALID;

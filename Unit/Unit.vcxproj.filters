@@ -25,12 +25,6 @@
     <ClInclude Include="MaterialPort.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PortCollection.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ParameterCollection.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Solver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -44,6 +38,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ParameterReal.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Collection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
