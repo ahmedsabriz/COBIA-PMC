@@ -11,10 +11,6 @@ class Validator :
 	/*
 	* Validator Class
 	* TODO: Description
-	* Validate ICapeParameterSpecification & ICapeRealParameterSpecification
-	* if (param1->getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
-	*	val = param1->Validate(message) && param1->Validate(param1->getValue(), message);
-	* }
 	*/
 
 	public CapeOpenObject<Validator>,
@@ -22,7 +18,7 @@ class Validator :
 	
 	// Members
 	CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>& portCollection;
-	CollectionPtr<CAPEOPEN_1_2::CapeParameter, ParameterOptionPtr>& paramCollection;
+	CollectionPtr<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter>& paramCollection;
 
 public:
 
@@ -31,33 +27,86 @@ public:
 	}
 
 	Validator(CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>& _portCollection,
-		CollectionPtr<CAPEOPEN_1_2::CapeParameter, ParameterOptionPtr>& _paramCollection) :
-		portCollection(_portCollection), paramCollection(_paramCollection){
+		CollectionPtr<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter>& _paramCollection) :
+		portCollection(_portCollection), paramCollection(_paramCollection) {
 	}
 
 	~Validator() {
 	}
 
-	CapeBoolean validateMaterialPorts(/*out*/ CapeString message) {
+	CapeBoolean validateParameterSpecifications(/*out*/ CapeString message) {
+		CapeBoolean val = true;
+		for (CAPEOPEN_1_2::CapeParameter param : paramCollection->iterateOverItems()) {
+			// Only validate if not valid
+			if (param.getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
+				if (param.getType() == CAPEOPEN_1_2::CAPE_PARAMETER_REAL) {
+					ParameterRealPtr realParam(static_cast<ParameterReal*>((CAPEOPEN_1_2::ICapeParameter*)param));
+					val = realParam->Validate(message) && realParam->Validate(realParam->getValue(), message);
+				}
+				else if (param.getType() == CAPEOPEN_1_2::CAPE_PARAMETER_STRING) {
+					ParameterOptionPtr optionParam(static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)param));
+					CapeString value(new CapeStringImpl);
+					(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)param))->getValue(value);
+					val = optionParam->Validate(message) && optionParam->Validate(value, message);
+				}
+			}
+			// Return if last parameter has an error
+			if (!val) {
+				break;
+			}
+		}
+		return val;
+	}
+
+	CapeBoolean validateHeatExchangerStreamSides(/*out*/ CapeString message,
+		/*in*/ CapeArrayStringImpl& sideOptions) {
+
+		// Get inlet side param value
+		CapeString in1sideValue(new CapeStringImpl), in2sideValue(new CapeStringImpl);
+		(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImplemntationByIndex(0)))->getValue(in1sideValue);
+		(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImplemntationByIndex(1)))->getValue(in2sideValue);
+
+		// Validate that primary streams are not ignored
+		if (in1sideValue == sideOptions[0]) {
+			message = COBIATEXT("Primary stream Inlet 1 cannot be ignored");
+			return false;
+		}
+		if (in2sideValue == sideOptions[0]) {
+			message = COBIATEXT("Primary stream Inlet 2 cannot be ignored");
+			return false;
+		}
+		
+		// Validate that primary streams are not on the same side
+		if (in1sideValue == in2sideValue) {
+			message = COBIATEXT("Primary streams cannot be on the same side");
+			return false;
+		}
+
+		return true;
+	}
+
+
+	CapeBoolean validateMaterialPorts(/*out*/ CapeString message, /*in*/ CapeArrayStringImpl& sideOptions) {
 
 		// Check whether all ports are connected, and connected to materials with equal compound lists
+		MaterialPortPtr portPtr;
 		CapeInterface connectedObject;
-		CapeString portName;
+		CapeStringImpl portName;
 		CapeArrayStringImpl refCompIDs, compIDs;
 		CapeArrayStringImpl formulae, names, casNumbers;
 		CapeArrayRealImpl boilTemps, molecularWeights;
 		CapeBoolean sameCompList;
 
-		MaterialPortPtr portPtr;
-		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
-			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
+		for (CapeInteger index = 0, count = portCollection->getCount(); index < count; index++) {
+			portPtr = portCollection->getItemImplemntationByIndex(index);
 			connectedObject = portPtr->getConnectedObject();
+			CAPEOPEN_1_2::CapeIdentification identification(portPtr);
+			identification.getComponentName(portName);
+
 			// Check whether port is connected
 			if (!connectedObject) {
-				if (portPtr->isPrimary()) {
-					portPtr->getComponentName(portName);
-					CapeStringImpl _portName(portName);
-					message = COBIATEXT("Port ") + _portName + COBIATEXT(" is not connected");
+				if (portPtr->isPrimary() || !validateHeatExchangerInletOutlet(message, sideOptions, portPtr, index)) {
+					message = COBIATEXT("Port ") + portName + COBIATEXT(" is not connected");
 					return false;
 				}
 			}
@@ -89,44 +138,29 @@ public:
 		return true;
 	}
 
-	CapeBoolean validateHeatExchangerInletOutlet(/*out*/ CapeString message) {
+	CapeBoolean validateHeatExchangerInletOutlet(/*out*/ CapeString message,
+		/*in*/ CapeArrayStringImpl& sideOptions, /*in*/MaterialPortPtr& portPtr,
+		/*in*/CapeInteger index) {
 
-		// 	Validate that each optional inlet has an outlet
-		MaterialPortPtr portPtr;
-		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
-			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
-			if (
-				!portPtr->isPrimary() &&
-				portPtr->getConnectedObject() &&
-				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
-				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_INLET
-				) {
-				/*if (!portCollection->Item(i + 1).getConnectedObject()) {
-					message = COBIATEXT("An inlet material stream is missing an outlet connection");
-					return false;
-				}*/
-			}
+		// This function applies to material ports only
+		if (portPtr->getPortType() != CAPEOPEN_1_2::CAPE_MATERIAL) { return true; }
+
+		// Get inlet side param value
+		CapeString sideValue(new CapeStringImpl);
+
+		// 	Validate that if an inlet is disconnected, it is ignored
+		if (portPtr->getDirection() == CAPEOPEN_1_2::CAPE_INLET) {
+			(static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImplemntationByIndex(index/2)))->getValue(sideValue);
+			if (sideValue == sideOptions[0]) { return true; }
 		}
 
-		// 	Validate that each optional outlet has an inlet
-		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
-			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
-			if (
-				!portPtr->isPrimary() &&
-				portPtr->getConnectedObject() &&
-				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
-				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET
-				) {
-				if (!portCollection->Item(i - 1).getConnectedObject()) {
-					message = COBIATEXT("An outlet material stream is missing an inlet connection");
-					return false;
-				}
-			}
+		// 	Validate that if an outlet is disconnected, its inlet is ignored
+		else if (portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
+			(static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImplemntationByIndex((index-1)/2)))->getValue(sideValue);
+			if (sideValue == sideOptions[0]) { return true; }
 		}
-		
-		// TODO: Validate a minimum of 1 hot and 1 cold streams
-
-		return true;
+	
+		return false;
 	}
 
 	void preparePhaseIDs (/*out*/ std::vector<CapeArrayStringImpl> &productsPhaseIDs,
@@ -141,10 +175,10 @@ public:
 		CapeArrayStringImpl phaseIDs, stateOfAggregation, keyCompounds;
 		CapeArrayEnumerationImpl<CAPEOPEN_1_2::CapePhaseStatus> phaseStatus;
 
-		MaterialPortPtr portPtr;
-		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
-			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
-			if (portPtr->getConnectedObject() && portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
+		
+		for (MaterialPortPtr portPtr: portCollection->iterateOverItems()) {
+			if (portPtr->getConnectedObject() &&
+				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
 				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
 				material = portPtr->getMaterial();
 				CAPEOPEN_1_2::CapeThermoPhases phases(material);

@@ -37,16 +37,17 @@ public:
 		return CAPEOPEN_1_2::CAPE_PARAMETER_REAL;
 	}
 	CapeBoolean Validate(/*out*/ CapeString message) {
-		// First validation is for type and mode
 		if (getType() != CAPEOPEN_1_2::CAPE_PARAMETER_REAL || getMode() != paramMode) {
-			message = COBIATEXT("Parameter does not meet specifications");
-			throw cape_open_error(COBIAERR_UnknownError);
+			message = paramName + COBIATEXT(" does not meet specifications");
+			paramValidationStatus = CAPEOPEN_1_2::CAPE_INVALID;
+			return false;
 		}
 		return true;
 	}
 	void Reset() {
 		this->value = defaultValue;
 		dirty = true;
+		paramValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 	}
 	
 	//CAPEOPEN_1_2::ICapeRealParameter
@@ -55,6 +56,8 @@ public:
 	}
 	void putValue(/*in*/ CapeReal value) {
 		this->value = value;
+		dirty = true;
+		paramValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 	}
 	CapeReal getDefaultValue() {
 		return this->defaultValue;
@@ -78,15 +81,13 @@ public:
 		dimensionality[8] = this->dimensionality[8];	// CAPE_DIFFERENCE_FLAG
 	}
 	CapeBoolean Validate(/*in*/ CapeReal value,/*out*/ CapeString message) {
-		// Second validation is for value
-		CapeBoolean val = true;
 		if (value < lowerBound || value > upperBound) {
-			val = false;
-			message = COBIATEXT("Parameter Value is out of bound");
-			throw cape_open_error(COBIAERR_UnknownError);
+			message = paramName + COBIATEXT(" value is out of bound");
+			paramValidationStatus = CAPEOPEN_1_2::CAPE_INVALID;
+			return false;
 		}
-		paramValidationStatus = (val) ? CAPEOPEN_1_2::CAPE_VALID : CAPEOPEN_1_2::CAPE_INVALID;
-		return val;
+		paramValidationStatus = CAPEOPEN_1_2::CAPE_VALID;
+		return true;
 	}
 };
 

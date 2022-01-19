@@ -36,16 +36,17 @@ public:
 		return CAPEOPEN_1_2::CAPE_PARAMETER_STRING;
 	}
 	CapeBoolean Validate(/*out*/ CapeString message) {
-		// First validation is for type and mode
 		if (getType() != CAPEOPEN_1_2::CAPE_PARAMETER_STRING || getMode() != CAPEOPEN_1_2::CAPE_INPUT) {
-			message = COBIATEXT("Parameter does not meet specifications");
-			throw cape_open_error(COBIAERR_UnknownError);
+			message = paramName + COBIATEXT(" does not meet specifications");
+			paramValidationStatus = CAPEOPEN_1_2::CAPE_INVALID;
+			return false;
 		}
 		return true;
 	}
 	void Reset() {
 		this->value = defaultValue;
 		dirty = true;
+		paramValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 	}
 	
 	//CAPEOPEN_1_2::ICapeStringParameter
@@ -54,6 +55,8 @@ public:
 	}
 	void putValue(/*in*/ CapeString value) {
 		this->value = value;
+		dirty = true;
+		paramValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 	}
 	void getDefaultValue(/*out*/ CapeString defaultValue) {
 		defaultValue = this->defaultValue;
@@ -69,15 +72,13 @@ public:
 		return true;
 	}
 	CapeBoolean Validate(/*in*/ CapeString value,/*out*/ CapeString message) {
-		// Second validation for value
 		for (CapeString option : CapeArrayString(optionNames)) {
 			if (value == option) {
 				paramValidationStatus = CAPEOPEN_1_2::CAPE_VALID;
 				return true;
 			}
 		}
-		message = COBIATEXT("Option is not allowed"); // TODO: indicate position
-		throw cape_open_error(COBIAERR_UnknownError);
+		message = paramName + COBIATEXT(" is required");
 		paramValidationStatus = CAPEOPEN_1_2::CAPE_INVALID;
 		return false;
 	}

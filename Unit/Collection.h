@@ -36,7 +36,19 @@ public:
 	}
 
 	// Method to removing ports from the collection - Not Implemented
+
+	// Lookup by index and return a CollectionItem
+	CollectionItem getItemImplemntationByIndex(/*in*/ CapeInteger index) {
+		if ((index < 0) || (index >= (CapeInteger)items.size())) {
+			throw cape_open_error(COBIAERR_NoSuchItem);
+		}
+		return items[index];
+	}
 	
+	std::vector<CollectionItem> iterateOverItems() {
+		return items;
+	}
+
 	// CAPEOPEN_1_2::ICapeIdentification
 	void getComponentName(/*out*/ CapeString name) {
 		name = COBIATEXT("Collection");

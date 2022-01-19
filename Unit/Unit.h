@@ -57,7 +57,7 @@ class Unit :
 
 	// Members: Collections
 	CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr> portCollection;
-	CollectionPtr<CAPEOPEN_1_2::CapeParameter, ParameterOptionPtr> paramCollection;
+	CollectionPtr<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter> paramCollection;
 
 	// Validator and Solver
 	ValidatorPtr validator;
@@ -116,7 +116,7 @@ public:
 		in4side(new ParameterOption(name, validationStatus, dirty, COBIATEXT("Inlet 4 Side"), sideOptions)),
 		in5side(new ParameterOption(name, validationStatus, dirty, COBIATEXT("Inlet 5 Side"), sideOptions)),
 		portCollection(new Collection<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr> (name)),
-		paramCollection(new Collection<CAPEOPEN_1_2::CapeParameter, ParameterOptionPtr>(name)),
+		paramCollection(new Collection<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter>(name)),
 		validator(new Validator(portCollection, paramCollection)) {
 
 		// Stream Side Options
@@ -184,15 +184,13 @@ public:
 		return validationStatus;
 	}
 	CapeBoolean Validate(/*out*/ CapeString message) {
-		if (validator->validateMaterialPorts(message) && validator->validateHeatExchangerInletOutlet(message)) {
-			validator->preparePhaseIDs(productsPhaseIDs, productsPhaseStatus);
-			validationStatus = CAPEOPEN_1_2::CAPE_VALID;
-			return true;
-		}
-		else {
-			validationStatus = CAPEOPEN_1_2::CAPE_INVALID;
-			return false;
-		}
+		CapeBoolean val = validator->validateParameterSpecifications(message);
+		if (val) { val = validator->validateHeatExchangerStreamSides(message, sideOptions); }
+		if (val) { val = validator->validateMaterialPorts(message, sideOptions); }
+		if (val) { validator->preparePhaseIDs(productsPhaseIDs, productsPhaseStatus); }
+			
+		validationStatus = val ? CAPEOPEN_1_2::CAPE_VALID : CAPEOPEN_1_2::CAPE_INVALID;
+		return val;
 	}
 	void Calculate() {
 		// Check validation status before calculation
