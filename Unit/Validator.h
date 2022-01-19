@@ -63,8 +63,8 @@ public:
 
 		// Get inlet side param value
 		CapeString in1sideValue(new CapeStringImpl), in2sideValue(new CapeStringImpl);
-		(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImplemntationByIndex(0)))->getValue(in1sideValue);
-		(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImplemntationByIndex(1)))->getValue(in2sideValue);
+		(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImpl(0)))->getValue(in1sideValue);
+		(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImpl(1)))->getValue(in2sideValue);
 
 		// Validate that primary streams are not ignored
 		if (in1sideValue == sideOptions[0]) {
@@ -98,7 +98,7 @@ public:
 		CapeBoolean sameCompList;
 
 		for (CapeInteger index = 0, count = portCollection->getCount(); index < count; index++) {
-			portPtr = portCollection->getItemImplemntationByIndex(index);
+			portPtr = portCollection->getItemImpl(index);
 			connectedObject = portPtr->getConnectedObject();
 			CAPEOPEN_1_2::CapeIdentification identification(portPtr);
 			identification.getComponentName(portName);
@@ -148,16 +148,18 @@ public:
 		// Get inlet side param value
 		CapeString sideValue(new CapeStringImpl);
 
-		// 	Validate that if an inlet is disconnected, it is ignored
+		// 	Validate that if an inlet is disconnected, it is agnored and its outlet is disconnected
 		if (portPtr->getDirection() == CAPEOPEN_1_2::CAPE_INLET) {
-			(static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImplemntationByIndex(index/2)))->getValue(sideValue);
-			if (sideValue == sideOptions[0]) { return true; }
+			(static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImpl(index/2)))->getValue(sideValue);
+			if (sideValue == sideOptions[0] && !portCollection->getItemImpl(index+1)->getConnectedObject()) {
+				return true;
+			}
 		}
 
-		// 	Validate that if an outlet is disconnected, its inlet is ignored
+		// 	Validate that if an outlet is disconnected, its inlet is ignored and disconnected
 		else if (portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
-			(static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImplemntationByIndex((index-1)/2)))->getValue(sideValue);
-			if (sideValue == sideOptions[0]) { return true; }
+			(static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImpl((index-1)/2)))->getValue(sideValue);
+			if (sideValue == sideOptions[0] && !portCollection->getItemImpl(index-1)->getConnectedObject()) { return true; }
 		}
 	
 		return false;
@@ -177,9 +179,9 @@ public:
 
 		
 		for (MaterialPortPtr portPtr: portCollection->iterateOverItems()) {
-			if (portPtr->getConnectedObject() &&
-				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
-				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
+			if (portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
+				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET &&
+				portPtr->getConnectedObject()) {
 				material = portPtr->getMaterial();
 				CAPEOPEN_1_2::CapeThermoPhases phases(material);
 				phases.GetPhaseList(phaseIDs, stateOfAggregation, keyCompounds);

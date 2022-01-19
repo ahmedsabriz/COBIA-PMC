@@ -29,10 +29,10 @@ public:
 		// Product material object id copied from feed material object allowing to perfrom calculations
 		// before setting its properties to override feed peoperties' values
 		MaterialPortPtr portPtr, inletPtr;
-		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
-			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
+		for (CapeInteger index = 0, count = portCollection->getCount(); index < count; index++) {
+			portPtr = portCollection->getItemImpl(index);
 			if (portPtr->getConnectedObject() && portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
-				inletPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i-1));
+				inletPtr = portCollection->getItemImpl(index-1);
 				portPtr->getMaterial().CopyFromMaterial(inletPtr->getMaterial());
 			}
 		}
@@ -53,12 +53,10 @@ public:
 		/*in*/ CapeArrayStringImpl flashCond1, /*in*/ CapeArrayStringImpl flashCond2) {
 
 		size_t j = 0;
-		MaterialPortPtr portPtr;
-		for (size_t i = 0, count = portCollection->getCount(); i < count; i++) {
-			portPtr = static_cast<MaterialPort*>((CAPEOPEN_1_2::ICapeUnitPort*)portCollection->Item(i));
-			if (portPtr->getConnectedObject() &&
-				portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
-				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
+		for (MaterialPortPtr portPtr : portCollection->iterateOverItems()) {
+			if (portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
+				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET &&
+				portPtr->getConnectedObject()) {
 
 				// Allow all phases to take part in product flash
 				CAPEOPEN_1_2::CapeThermoMaterial material = portPtr->getMaterial();

@@ -38,7 +38,7 @@ public:
 	// Method to removing ports from the collection - Not Implemented
 
 	// Lookup by index and return a CollectionItem
-	CollectionItem getItemImplemntationByIndex(/*in*/ CapeInteger index) {
+	CollectionItem getItemImpl(/*in*/ CapeInteger index) {
 		if ((index < 0) || (index >= (CapeInteger)items.size())) {
 			throw cape_open_error(COBIAERR_NoSuchItem);
 		}
