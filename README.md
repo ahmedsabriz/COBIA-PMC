@@ -40,3 +40,6 @@ TODO
 
 ## Benchmarking Against Commercial Simulator (ASPEN HYSYS v9.0)
 TODO
+
+## Compiling and registering
+MSVC142 or equivalent. Regsiter using COBIA Developer Command Prompt `cobiaregister PATH-TO-MODULE`
