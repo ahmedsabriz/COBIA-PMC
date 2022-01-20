@@ -72,15 +72,21 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bld\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bld\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bld\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bld\$(Platform)\$(Configuration)\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -88,7 +94,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE);C:\Users\ahmedsabriz\source\repos\ahmedsabriz\COBIA\boost_1_77_0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -103,7 +109,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE);C:\Users\ahmedsabriz\source\repos\ahmedsabriz\COBIA\boost_1_77_0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -118,7 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE);C:\Users\ahmedsabriz\source\repos\ahmedsabriz\COBIA\boost_1_77_0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,7 +139,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(COBIA_INCLUDE);C:\Users\ahmedsabriz\source\repos\ahmedsabriz\COBIA\boost_1_77_0</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(COBIA_Include);$(COBIA_INCLUDE)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,15 +153,14 @@
     <ClCompile Include="Unit.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="EnergyPort.h" />
+    <ClInclude Include="Collection.h" />
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="Parameter.h" />
+    <ClInclude Include="ParameterOption.h" />
+    <ClInclude Include="ParameterReal.h" />
+    <ClInclude Include="Validator.h" />
     <ClInclude Include="MaterialPort.h" />
-    <ClInclude Include="ParameterCollection.h" />
-    <ClInclude Include="PortCollection.h" />
-    <ClInclude Include="Reaction.h" />
-    <ClInclude Include="ReactionPackage.h" />
-    <ClInclude Include="RealParameter.h" />
-    <ClInclude Include="PFR_Adiabatic_Solver.h" />
+    <ClInclude Include="Solver.h" />
     <ClInclude Include="Unit.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

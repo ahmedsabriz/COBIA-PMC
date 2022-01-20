@@ -25,28 +25,25 @@
     <ClInclude Include="MaterialPort.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PortCollection.h">
+    <ClInclude Include="Solver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ParameterCollection.h">
+    <ClInclude Include="Validator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="RealParameter.h">
+    <ClInclude Include="Parameter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="EnergyPort.h">
+    <ClInclude Include="ParameterOption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ReactionPackage.h">
+    <ClInclude Include="ParameterReal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Reaction.h">
+    <ClInclude Include="Collection.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Helpers.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="PFR_Adiabatic_Solver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
