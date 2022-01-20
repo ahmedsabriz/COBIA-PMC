@@ -4,6 +4,8 @@
 
 using namespace COBIA;
 
+#define PARAMSTRINGCAST(param) static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)param)
+
 class ParameterOption :
 	public CapeOpenObject<ParameterOption>,
 	public CAPEOPEN_1_2::CapeIdentificationAdapter<ParameterOption>,
@@ -47,6 +49,7 @@ public:
 		this->value = defaultValue;
 		dirty = true;
 		paramValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
+		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 	}
 	
 	//CAPEOPEN_1_2::ICapeStringParameter
@@ -57,6 +60,7 @@ public:
 		this->value = value;
 		dirty = true;
 		paramValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
+		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 	}
 	void getDefaultValue(/*out*/ CapeString defaultValue) {
 		defaultValue = this->defaultValue;

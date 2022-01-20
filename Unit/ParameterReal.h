@@ -4,6 +4,8 @@
 
 using namespace COBIA;
 
+#define PARAMREALCAST(param) static_cast<ParameterReal*>((CAPEOPEN_1_2::ICapeParameter*)param)
+
 class ParameterReal :
 	public CapeOpenObject<ParameterReal>,
 	public CAPEOPEN_1_2::CapeIdentificationAdapter<ParameterReal>,
@@ -48,6 +50,7 @@ public:
 		this->value = defaultValue;
 		dirty = true;
 		paramValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
+		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 	}
 	
 	//CAPEOPEN_1_2::ICapeRealParameter
@@ -58,6 +61,7 @@ public:
 		this->value = value;
 		dirty = true;
 		paramValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
+		unitValidationStatus = CAPEOPEN_1_2::CAPE_NOT_VALIDATED;
 	}
 	CapeReal getDefaultValue() {
 		return this->defaultValue;

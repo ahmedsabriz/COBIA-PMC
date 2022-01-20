@@ -5,7 +5,6 @@
 
 using namespace COBIA;
 
-
 class Validator :
 
 	/*
@@ -19,6 +18,8 @@ class Validator :
 	// Members
 	PortCollectionPtr& portCollection;
 	ParameterCollectionPtr& paramCollection;
+	CapeArrayStringImpl& sideOptions;
+	#define IGNORED sideOptions[0]
 
 public:
 
@@ -26,8 +27,9 @@ public:
 		return COBIATEXT("Validator");
 	}
 
-	Validator(PortCollectionPtr& _portCollection, ParameterCollectionPtr& _paramCollection) :
-		portCollection(_portCollection), paramCollection(_paramCollection) {
+	Validator(PortCollectionPtr& _portCollection, ParameterCollectionPtr& _paramCollection,
+		CapeArrayStringImpl& _sideOptions) :
+		portCollection(_portCollection), paramCollection(_paramCollection), sideOptions(_sideOptions) {
 	}
 
 	~Validator() {
@@ -36,17 +38,16 @@ public:
 	CapeBoolean validateParameterSpecifications(/*out*/ CapeString message) {
 		CapeBoolean val = true;
 		for (CAPEOPEN_1_2::CapeParameter& param : paramCollection->iterateOverItems()) {
+
 			// Only validate if not valid
 			if (param.getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
 				if (param.getType() == CAPEOPEN_1_2::CAPE_PARAMETER_REAL) {
-					ParameterRealPtr realParam(static_cast<ParameterReal*>((CAPEOPEN_1_2::ICapeParameter*)param));
-					val = realParam->Validate(message) && realParam->Validate(realParam->getValue(), message);
+					val = PARAMREALCAST(param)->Validate(PARAMREALCAST(param)->getValue(), message);
 				}
 				else if (param.getType() == CAPEOPEN_1_2::CAPE_PARAMETER_STRING) {
-					ParameterOptionPtr optionParam(static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)param));
 					CapeString value(new CapeStringImpl);
-					(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)param))->getValue(value);
-					val = optionParam->Validate(message) && optionParam->Validate(value, message);
+					PARAMSTRINGCAST(param)->getValue(value);
+					val = PARAMSTRINGCAST(param)->Validate(value, message);
 				}
 			}
 			// Return if last parameter has an error
@@ -57,20 +58,19 @@ public:
 		return val;
 	}
 
-	CapeBoolean validateHeatExchangerStreamSides(/*out*/ CapeString message,
-		/*in*/ CapeArrayStringImpl& sideOptions) {
+	CapeBoolean validateMSHEXSides(/*out*/ CapeString message) {
 
-		// Get inlet side param value
+		// Get inlet side parameter value for first 2 "primary" inlets
 		CapeString in1sideValue(new CapeStringImpl), in2sideValue(new CapeStringImpl);
-		(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImpl(0)))->getValue(in1sideValue);
-		(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImpl(1)))->getValue(in2sideValue);
+		PARAMSTRINGCAST(paramCollection->getItemImpl(0))->getValue(in1sideValue);
+		PARAMSTRINGCAST(paramCollection->getItemImpl(1))->getValue(in2sideValue);
 
 		// Validate that primary streams are not ignored
-		if (in1sideValue == sideOptions[0]) {
+		if (in1sideValue == IGNORED) {
 			message = COBIATEXT("Primary stream Inlet 1 cannot be ignored");
 			return false;
 		}
-		if (in2sideValue == sideOptions[0]) {
+		if (in2sideValue == IGNORED) {
 			message = COBIATEXT("Primary stream Inlet 2 cannot be ignored");
 			return false;
 		}
@@ -85,12 +85,11 @@ public:
 	}
 
 
-	CapeBoolean validateMaterialPorts(/*out*/ CapeString message, /*in*/ CapeArrayStringImpl& sideOptions) {
+	CapeBoolean validateMaterialPorts(/*out*/ CapeString message) {
 
 		// Check whether all ports are connected, and connected to materials with equal compound lists
 		MaterialPortPtr portPtr;
 		CapeInterface connectedObject;
-		CapeStringImpl portName;
 		CapeArrayStringImpl refCompIDs, compIDs;
 		CapeArrayStringImpl formulae, names, casNumbers;
 		CapeArrayRealImpl boilTemps, molecularWeights;
@@ -99,13 +98,13 @@ public:
 		for (CapeInteger index = 0, count = portCollection->getCount(); index < count; index++) {
 			portPtr = portCollection->getItemImpl(index);
 			connectedObject = portPtr->getConnectedObject();
-			CAPEOPEN_1_2::CapeIdentification identification(portPtr);
-			identification.getComponentName(portName);
 
 			// Check whether port is connected
 			if (!connectedObject) {
-				if (portPtr->isPrimary() || !validateHeatExchangerInletOutlet(message, sideOptions, portPtr, index)) {
-					message = COBIATEXT("Port ") + portName + COBIATEXT(" is not connected");
+				// If not connected, check if the port if primary
+				// or optional, but with additional requirments imposed by the unit
+				if (portPtr->isPrimary() || requiredByMSHEX(message, sideOptions, portPtr, index)) {
+					message = COBIATEXT("Port ") + getName(static_cast<CapeInterface>(portPtr)) + COBIATEXT(" is not connected");
 					return false;
 				}
 			}
@@ -137,28 +136,29 @@ public:
 		return true;
 	}
 
-	CapeBoolean validateHeatExchangerInletOutlet(/*out*/ CapeString message,
+	CapeBoolean requiredByMSHEX(/*out*/ CapeString message,
 		/*in*/ CapeArrayStringImpl& sideOptions, /*in*/MaterialPortPtr& portPtr,
 		/*in*/CapeInteger index) {
 
+
 		// This function applies to material ports only
-		if (portPtr->getPortType() != CAPEOPEN_1_2::CAPE_MATERIAL) { return true; }
-
-		// Get inlet side param value
-		CapeString sideValue(new CapeStringImpl);
-
-		// 	Validate that if an inlet is disconnected, it is agnored and its outlet is disconnected
+		if (portPtr->getPortType() != CAPEOPEN_1_2::CAPE_MATERIAL) { return false; }
+		
+		// 	If an optional inlet is not ignored or ignored but has a connected outlet, it is required
 		if (portPtr->getDirection() == CAPEOPEN_1_2::CAPE_INLET) {
-			(static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImpl(index/2)))->getValue(sideValue);
-			if (sideValue == sideOptions[0] && !portCollection->getItemImpl(index+1)->getConnectedObject()) {
+			// Get inlet side param value
+			CapeString sideValue(new CapeStringImpl);
+			PARAMSTRINGCAST(paramCollection->getItemImpl(index/2))->getValue(sideValue);
+			if (portCollection->getItemImpl(index+1)->getConnectedObject() || sideValue.c_str() != IGNORED) {
 				return true;
 			}
 		}
 
-		// 	Validate that if an outlet is disconnected, its inlet is ignored and disconnected
+		// 	If an optional outlet has a connected inlet, it is required
 		else if (portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
-			(static_cast<ParameterOption*>((CAPEOPEN_1_2::ICapeParameter*)paramCollection->getItemImpl((index-1)/2)))->getValue(sideValue);
-			if (sideValue == sideOptions[0] && !portCollection->getItemImpl(index-1)->getConnectedObject()) { return true; }
+			if (portCollection->getItemImpl(index-1)->getConnectedObject()) {
+				return true;
+			}
 		}
 	
 		return false;

@@ -1,5 +1,6 @@
 #pragma once
 #include <COBIA.h>
+#include "Helpers.h"
 
 using namespace COBIA;
 
@@ -76,11 +77,8 @@ public:
 
 	// Lookup by name
 	CollectionItemInterface Item(/*in*/ CapeString name) {
-		CapeStringImpl itemName;
 		for (CollectionItem& item : items) {
-			CAPEOPEN_1_2::CapeIdentification identification(item);
-			identification.getComponentName(itemName);
-			if (itemName == name) {
+			if (getName(static_cast<CapeInterface>(item)) == name) {
 				return item;
 			}
 		}
@@ -98,4 +96,3 @@ using PortCollectionPtr = CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPort
 using ParameterCollectionPtr = CollectionPtr<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter>;
 using PortCollection = Collection<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>;
 using ParameterCollection = Collection<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter>;
-

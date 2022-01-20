@@ -6,6 +6,7 @@
 #include "Collection.h"
 #include "Validator.h"
 #include "Solver.h"
+#include "Helpers.h"
 
 
 #ifdef _DEBUG
@@ -117,7 +118,7 @@ public:
 		in5side(new ParameterOption(name, validationStatus, dirty, COBIATEXT("Inlet 5 Side"), sideOptions)),
 		portCollection(new PortCollection(name)),
 		paramCollection(new ParameterCollection(name)),
-		validator(new Validator(portCollection, paramCollection)) {
+		validator(new Validator(portCollection, paramCollection, sideOptions)) {
 
 		// Stream Side Options
 		sideOptions[0] = COBIATEXT("Ignore");
@@ -184,9 +185,12 @@ public:
 		return validationStatus;
 	}
 	CapeBoolean Validate(/*out*/ CapeString message) {
+		// Only validate if Validation status changed
+		if (validationStatus == CAPEOPEN_1_2::CAPE_VALID) { return true; }
+
 		CapeBoolean val = validator->validateParameterSpecifications(message);
-		if (val) { val = validator->validateHeatExchangerStreamSides(message, sideOptions); }
-		if (val) { val = validator->validateMaterialPorts(message, sideOptions); }
+		if (val) { val = validator->validateMSHEXSides(message); }
+		if (val) { val = validator->validateMaterialPorts(message); }
 		if (val) { validator->preparePhaseIDs(productsPhaseIDs, productsPhaseStatus); }
 			
 		validationStatus = val ? CAPEOPEN_1_2::CAPE_VALID : CAPEOPEN_1_2::CAPE_INVALID;
@@ -228,8 +232,7 @@ public:
 	}
 	void Terminate() {
 		// Disconnect ports
-		CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeUnitPort> collection(portCollection);
-		for (CAPEOPEN_1_2::CapeUnitPort p : collection) {
+		for (CAPEOPEN_1_2::CapeUnitPort p : portCollection->iterateOverItems()) {
 			p.Disconnect();
 		}
 		// In case a reference to the simulation context is stored, it too must be released at Terminate
@@ -244,24 +247,16 @@ public:
 		writer.Add(ConstCapeString(COBIATEXT("description")), description);
 
 		for (CAPEOPEN_1_2::CapeParameter& param : paramCollection->iterateOverItems()) {
-			
-			CapeStringImpl paramName;
-			CAPEOPEN_1_2::CapeIdentification identification(param);
-			identification.getComponentName(paramName);
-
 			switch (param.getType()) {
 			case CAPEOPEN_1_2::CAPE_PARAMETER_REAL:
-			{
-				writer.Add(paramName, (static_cast<ParameterReal*> ((CAPEOPEN_1_2::ICapeParameter*)param))->getValue());
-			}
-			break;
-			case CAPEOPEN_1_2::CAPE_PARAMETER_STRING:
-			{
+				writer.Add(getName(param), PARAMREALCAST(param)->getValue());
+				break;
+			case CAPEOPEN_1_2::CAPE_PARAMETER_STRING: {
 				CapeString value(new CapeStringImpl);
-				(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)param))->getValue(value);
-				writer.Add(paramName, value);
+				PARAMSTRINGCAST(param)->getValue(value);
+				writer.Add(getName(param), value);
+				break;
 			}
-			break;
 			default:
 				throw cape_open_error(COBIAERR_UnknownError);
 				break;
@@ -275,24 +270,16 @@ public:
 		reader.GetString(ConstCapeString(COBIATEXT("name")), name);
 		reader.GetString(ConstCapeString(COBIATEXT("description")), description);
 		for (CAPEOPEN_1_2::CapeParameter& param : paramCollection->iterateOverItems()) {
-
-			CapeStringImpl paramName;
-			CAPEOPEN_1_2::CapeIdentification identification(param);
-			identification.getComponentName(paramName);
-
 			switch (param.getType()) {
 			case CAPEOPEN_1_2::CAPE_PARAMETER_REAL:
-			{
-				(static_cast<ParameterReal*> ((CAPEOPEN_1_2::ICapeParameter*)param))->putValue(reader.GetReal(paramName));
-			}
-			break;
-			case CAPEOPEN_1_2::CAPE_PARAMETER_STRING:
-			{
+				PARAMREALCAST(param)->putValue(reader.GetReal(getName(param)));
+				break;
+			case CAPEOPEN_1_2::CAPE_PARAMETER_STRING: {
 				CapeString value(new CapeStringImpl);
-				reader.GetString(paramName, value);
-				(static_cast<ParameterOption*> ((CAPEOPEN_1_2::ICapeParameter*)param))->putValue(value);
+				reader.GetString(getName(param), value);
+				PARAMSTRINGCAST(param)->putValue(value);
+				break;
 			}
-			break;
 			default:
 				throw cape_open_error(COBIAERR_UnknownError);
 				break;

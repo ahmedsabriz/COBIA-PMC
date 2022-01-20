@@ -6,11 +6,7 @@
 
 using namespace COBIA;
 
-class Parameter /*:
-	public CapeOpenObject<Parameter>,
-	public CAPEOPEN_1_2::CapeIdentificationAdapter<Parameter>,
-	public CAPEOPEN_1_2::CapeParameterAdapter<Parameter>,
-	public CAPEOPEN_1_2::CapeParameterSpecificationAdapter<Parameter>*/ {
+class Parameter {
 
 protected:
 	// Members
@@ -64,5 +60,3 @@ public:
 	virtual void Reset() = 0;
 	
 };
-
-//using ParameterPtr = CapeOpenObjectSmartPointer<Parameter>;
