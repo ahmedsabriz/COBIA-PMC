@@ -1,63 +1,42 @@
-# COBIA Unit Operation
-CAPE-OPEN Unit Operation developed for COBIA middleware. The unit emulates the behaviour of conventional unit operation. The goal is to ultimately develop a non-conventional unit once the development of all modules is matured.
+# CAPE-OPEN Multi-Stream Heat Exchanger
+This is a chemical process modelling component developed as a Dynamic-Link Library (DLL) in C++ using CAPE-OPEN Binary Interop Architecture (COBIA)
+middleware. This makes it compatible with any CAPE-OPEN Standard compliant simulator. The unit aims to simulate a MultiStream Heat Exchanger.
 
-## Unit version
-0.4 (PFR with integrated reaction package)
+## Definitions
+
+### [Computer-Aided Process Engineering Open Standard (CAPE-OPEN)](https://www.colan.org/general-information-on-co-lan/)
+> CAPE-OPEN consists of a series of specifications to expand the range of application of process simulation technologies. The CAPE-OPEN specifications specify a set of software interfaces that allow plug and play inter-operability between a given process modelling environment (PME) and a third-party process modelling component (PMC).
+> CAPE-OPEN is an EU funded project supported by the non-profit organization [CO-LaN](https://www.colan.org/).
+
+### [CAPE-OPEN Binary Interop Architecture (COBIA)](https://www.colan.org/experiences-projects/cape-open-binary-interop-architecture-cobia/)
+> A new middleware, the CAPE-OPEN Binary Interop Architecture (COBIA), is the next step in the evolution of CAPE-OPEN. COBIA includes registration components, binary interoperability standards, and middleware that acts as a bridge between software components. Development of COBIA involves a number of tasks, grouped in phases, which are performed incrementally.
+> COBIA serves as a propritary replacement to Microsoft's Component Object Model (COM), upon which all earlier developments have relied.
+
 
 ## Dependencies
-1. COBIA SDK 1.2.0.8
-2. Boost 1.77
+1. [COBIA-Development SDK](https://colan.repositoryhosting.com/trac/colan_cobia/downloads) v1.2.0.8 
+2. [Windows 11 SDK](https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/) v10.0.22000.194
 
-## PFR Model
+## Model
+TODO
 ### Assumptions
-1. 1D (No radial gradient)
-2. No axial dispersion
-4. Homogenous
-5. Empty bed
-6. Adiabatic
-7. Constant heat capacity
-8. Constant heat of Reaction
-9. No pressure drop
-### ODE System
-<img width="173" alt="image" src="https://user-images.githubusercontent.com/80135041/145170402-73cb978d-22f1-413f-84b6-5e90b3f2fa3c.png">
-
-### Reaction
-<img width="505" alt="image" src="https://user-images.githubusercontent.com/80135041/145170505-10ceb6c5-3620-481d-ae53-7f1c9bb99d39.png">
-
+TODO
+### Mathematical Model
+TODO
 
 ## Implementation
-### Streams
-1. feed
-2. product
-3. energy
-### Unit Parameters
-1. reaactorLength
-2. reactorVolume
-3. conversion
-### Energy Parameters
-1. work
-2. temperatureLow  // Not utilised
-3. temperatureHigh // Not utilised
+The unit accepts any number of inlet streams (currently set to 5). The first two streams are mandatory and must have different sides (cold/hot) while the rest of the streams are optional if their side is set to "Ignore". All inlet/outlet pairs must be both connected even if they are ignored or both disconnected.
+### Input
+1. Inlet 1~5 (material stream)
+2. Inlet 1~5 Side (String Parameter)
+### Output
+1. Outlet 1~5 (material stream)
 
-## COCO simulation
-1. Simulation Executive: COFE 3.5.0.1.4 x64
-2. Property Package Manager: TEA 3.5.0.2 x64
-3. Property Package: ChemSep PCD 
-4. Model Set: Equation of State (Peng-Robinson)
-5. Reaction Package Manager: None
-6. Reaction Package: hard-coded
-7. Inlet data:
-   - Temperature = 880K
-   - Pressure    = 1.378 bar
-   - flowrate    = 152.2 gmol/s
-   - Composition = 100% C8H10
-8. Reactor data: 
-   - Length      = 6 m
-   - Volume      = 0.77 m3
+## Process Simulation Using CAPE-OPEN Reactor Model
+TODO
 
-<img width="479" alt="COBIA_PFR_Adiabatic" src="https://user-images.githubusercontent.com/80135041/145171803-a2a03a67-6bea-42db-8299-a779e9c6cfd1.png">
+<img width="708" alt="image" src="https://user-images.githubusercontent.com/80135041/150345537-42616fb7-c41f-4de9-bbd6-7543c4527758.png">
 
-## HYSYS Benchmark
-Values vary around 2% mainly due to model assuming constant heat of reaction and heat capacity throughout 210°C range
 
-<img width="674" alt="HYSYS_PFR_Adiabatic" src="https://user-images.githubusercontent.com/80135041/145166322-36f82c31-f9ed-4963-acda-7f8e3fa74da7.png">
+## Benchmarking Against Commercial Simulator (ASPEN HYSYS v9.0)
+TODO
