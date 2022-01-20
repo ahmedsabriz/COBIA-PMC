@@ -94,3 +94,8 @@ public:
 };
 
 template <typename CollectionItemInterface, typename CollectionItem> using CollectionPtr = CapeOpenObjectSmartPointer<Collection<CollectionItemInterface,CollectionItem>>;
+using PortCollectionPtr = CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>;
+using ParameterCollectionPtr = CollectionPtr<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter>;
+using PortCollection = Collection<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>;
+using ParameterCollection = Collection<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter>;
+

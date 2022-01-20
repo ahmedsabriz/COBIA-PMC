@@ -56,8 +56,8 @@ class Unit :
 	ParameterOptionPtr in1side, in2side, in3side, in4side, in5side;
 
 	// Members: Collections
-	CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr> portCollection;
-	CollectionPtr<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter> paramCollection;
+	PortCollectionPtr portCollection;
+	ParameterCollectionPtr paramCollection;
 
 	// Validator and Solver
 	ValidatorPtr validator;
@@ -115,8 +115,8 @@ public:
 		in3side(new ParameterOption(name, validationStatus, dirty, COBIATEXT("Inlet 3 Side"), sideOptions)),
 		in4side(new ParameterOption(name, validationStatus, dirty, COBIATEXT("Inlet 4 Side"), sideOptions)),
 		in5side(new ParameterOption(name, validationStatus, dirty, COBIATEXT("Inlet 5 Side"), sideOptions)),
-		portCollection(new Collection<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr> (name)),
-		paramCollection(new Collection<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter>(name)),
+		portCollection(new PortCollection(name)),
+		paramCollection(new ParameterCollection(name)),
 		validator(new Validator(portCollection, paramCollection)) {
 
 		// Stream Side Options
@@ -243,12 +243,11 @@ public:
 		writer.Add(ConstCapeString(COBIATEXT("name")), name);
 		writer.Add(ConstCapeString(COBIATEXT("description")), description);
 
-		CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeParameter> collection(paramCollection);
-		for (CAPEOPEN_1_2::CapeParameter param : collection) {
+		for (CAPEOPEN_1_2::CapeParameter& param : paramCollection->iterateOverItems()) {
 			
 			CapeStringImpl paramName;
-			CAPEOPEN_1_2::CapeIdentification interfaceID(param);
-			interfaceID.getComponentName(paramName);
+			CAPEOPEN_1_2::CapeIdentification identification(param);
+			identification.getComponentName(paramName);
 
 			switch (param.getType()) {
 			case CAPEOPEN_1_2::CAPE_PARAMETER_REAL:
@@ -275,12 +274,11 @@ public:
 	void Load(/*in*/ CAPEOPEN_1_2::CapePersistReader reader) {
 		reader.GetString(ConstCapeString(COBIATEXT("name")), name);
 		reader.GetString(ConstCapeString(COBIATEXT("description")), description);
-		CAPEOPEN_1_2::CapeCollection<CAPEOPEN_1_2::CapeParameter> collection(paramCollection);
-		for (CAPEOPEN_1_2::CapeParameter param : collection) {
+		for (CAPEOPEN_1_2::CapeParameter& param : paramCollection->iterateOverItems()) {
 
 			CapeStringImpl paramName;
-			CAPEOPEN_1_2::CapeIdentification interfaceID(param);
-			interfaceID.getComponentName(paramName);
+			CAPEOPEN_1_2::CapeIdentification identification(param);
+			identification.getComponentName(paramName);
 
 			switch (param.getType()) {
 			case CAPEOPEN_1_2::CAPE_PARAMETER_REAL:

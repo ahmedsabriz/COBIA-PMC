@@ -17,8 +17,8 @@ class Validator :
 	public CAPEOPEN_1_2::CapeIdentificationAdapter<Validator> {
 	
 	// Members
-	CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>& portCollection;
-	CollectionPtr<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter>& paramCollection;
+	PortCollectionPtr& portCollection;
+	ParameterCollectionPtr& paramCollection;
 
 public:
 
@@ -26,8 +26,7 @@ public:
 		return COBIATEXT("Validator");
 	}
 
-	Validator(CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>& _portCollection,
-		CollectionPtr<CAPEOPEN_1_2::CapeParameter, CAPEOPEN_1_2::CapeParameter>& _paramCollection) :
+	Validator(PortCollectionPtr& _portCollection, ParameterCollectionPtr& _paramCollection) :
 		portCollection(_portCollection), paramCollection(_paramCollection) {
 	}
 
@@ -36,7 +35,7 @@ public:
 
 	CapeBoolean validateParameterSpecifications(/*out*/ CapeString message) {
 		CapeBoolean val = true;
-		for (CAPEOPEN_1_2::CapeParameter param : paramCollection->iterateOverItems()) {
+		for (CAPEOPEN_1_2::CapeParameter& param : paramCollection->iterateOverItems()) {
 			// Only validate if not valid
 			if (param.getValStatus() != CAPEOPEN_1_2::CAPE_VALID) {
 				if (param.getType() == CAPEOPEN_1_2::CAPE_PARAMETER_REAL) {
@@ -178,7 +177,7 @@ public:
 		CapeArrayEnumerationImpl<CAPEOPEN_1_2::CapePhaseStatus> phaseStatus;
 
 		
-		for (MaterialPortPtr portPtr: portCollection->iterateOverItems()) {
+		for (MaterialPortPtr& portPtr: portCollection->iterateOverItems()) {
 			if (portPtr->getPortType() == CAPEOPEN_1_2::CAPE_MATERIAL &&
 				portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET &&
 				portPtr->getConnectedObject()) {

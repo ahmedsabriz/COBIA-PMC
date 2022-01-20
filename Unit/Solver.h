@@ -15,7 +15,7 @@ class Solver :
 	public CAPEOPEN_1_2::CapeIdentificationAdapter<Solver> {
 
 	// Members
-	CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>& portCollection;
+	PortCollectionPtr& portCollection;
 
 public:
 
@@ -23,7 +23,7 @@ public:
 		return COBIATEXT("Solver");
 	}
 
-	Solver(CollectionPtr<CAPEOPEN_1_2::CapeUnitPort, MaterialPortPtr>& _portCollection) : portCollection(_portCollection) {
+	Solver(PortCollectionPtr& _portCollection) : portCollection(_portCollection) {
 
 		// CAPE-OPEN unit operations may not have side effects on material objects connected to feeds.
 		// Product material object id copied from feed material object allowing to perfrom calculations
