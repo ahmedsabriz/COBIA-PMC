@@ -42,6 +42,4 @@ TODO
 TODO
 
 ## Compiling and registering
-MSVC142 or equivalent
-Regsiter using COBIA Developer Command Prompt
-`cobiaregister PATH-TO-MODULE`
+MSVC142 or equivalent. Regsiter using COBIA Developer Command Prompt `cobiaregister PATH-TO-MODULE`
