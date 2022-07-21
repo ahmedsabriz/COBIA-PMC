@@ -8,7 +8,7 @@ using namespace COBIA;
 class Solver :
 
 	/*
-		TODO
+	* TODO: Description
 	*/
 
 	public CapeOpenObject<Solver>,
@@ -16,6 +16,11 @@ class Solver :
 
 	// Members
 	PortCollectionPtr& portCollection;
+
+	CapeInteger streamCount;
+	std::vector<CAPEOPEN_1_2::CapeThermoMaterial> inletMaterials, outletMaterials;
+	std::vector<CapeReal> totalMolarFlow, T, P, enthalpyF;
+	std::vector<CapeArrayReal> X;
 
 public:
 
@@ -25,16 +30,26 @@ public:
 
 	Solver(PortCollectionPtr& _portCollection) : portCollection(_portCollection) {
 
+		// Store inlet & outlet material
+		for (MaterialPortPtr& portPtr : portCollection->iterateOverItems()) {
+			if (portPtr->getConnectedObject()) {
+				if (portPtr->getDirection() == CAPEOPEN_1_2::CAPE_INLET) {
+					inletMaterials.emplace_back(portPtr->getMaterial());
+				}
+				else {
+					outletMaterials.emplace_back(portPtr->getMaterial());
+
+				}
+			}
+		}
+
+		streamCount = inletMaterials.size();
+
 		// CAPE-OPEN unit operations may not have side effects on material objects connected to feeds.
 		// Product material object id copied from feed material object allowing to perfrom calculations
 		// before setting its properties to override feed peoperties' values
-		MaterialPortPtr portPtr, inletPtr;
-		for (CapeInteger index = 0, count = portCollection->getCount(); index < count; index++) {
-			portPtr = portCollection->getItemImpl(index);
-			if (portPtr->getConnectedObject() && portPtr->getDirection() == CAPEOPEN_1_2::CAPE_OUTLET) {
-				inletPtr = portCollection->getItemImpl(index-1);
-				portPtr->getMaterial().CopyFromMaterial(inletPtr->getMaterial());
-			}
+		for (size_t i = 0, length = outletMaterials.size(); i < length; i++) {
+			outletMaterials[i].CopyFromMaterial(inletMaterials[i]);
 		}
 	}
 
@@ -42,6 +57,18 @@ public:
 	}
 	
 	void getInitialConditions() {
+
+		CapeArrayReal propValues;
+		for (size_t i = 0; i < streamCount; i++) {
+			// Get molarFlow (inlet=outlet)
+			outletMaterials[i].GetOverallProp(ConstCapeString(COBIATEXT("totalflow")),
+				ConstCapeString(COBIATEXT("mole")), propValues);
+			totalMolarFlow[i] = propValues[0];
+			// Get T, P & X
+			outletMaterials[i].GetOverallTPFraction(T[i], P[i], X[i]);
+			// Get enthalpyF
+			enthalpyF[i] = calcOverallFromPhaseProps(outletMaterials[i], COBIATEXT("enthalpyF"));
+		}
 	}
 
 	void setProduct() {
