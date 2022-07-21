@@ -8,7 +8,6 @@ using namespace COBIA;
 class Validator :
 
 	/*
-	* Validator Class
 	* TODO: Description
 	*/
 

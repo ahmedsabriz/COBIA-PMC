@@ -8,7 +8,7 @@ using namespace COBIA;
 class Solver :
 
 	/*
-		TODO
+	* TODO: Description
 	*/
 
 	public CapeOpenObject<Solver>,
