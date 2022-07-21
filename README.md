@@ -17,13 +17,6 @@ middleware. This makes it compatible with any CAPE-OPEN Standard compliant simul
 1. [COBIA-Development SDK](https://colan.repositoryhosting.com/trac/colan_cobia/downloads) v1.2.0.8 
 2. [Windows 11 SDK](https://developer.microsoft.com/en-us/windows/downloads/sdk-archive/) v10.0.22000.194
 
-## Model
-TODO
-### Assumptions
-TODO
-### Mathematical Model
-TODO
-
 ## Implementation
 The unit accepts any number of inlet streams (currently set to 5). The first two streams are mandatory and must have different sides (cold/hot) while the rest of the streams are optional if their side is set to "Ignore". All inlet/outlet pairs must be both connected even if they are ignored or both disconnected.
 ### Input
@@ -32,14 +25,7 @@ The unit accepts any number of inlet streams (currently set to 5). The first two
 ### Output
 1. Outlet 1~5 (material stream)
 
-## Process Simulation Using CAPE-OPEN Reactor Model
-TODO
-
 <img width="708" alt="image" src="https://user-images.githubusercontent.com/80135041/150345537-42616fb7-c41f-4de9-bbd6-7543c4527758.png">
-
-
-## Benchmarking Against Commercial Simulator (ASPEN HYSYS v9.0)
-TODO
 
 ## Compiling and registering
 MSVC142 or equivalent. Regsiter using COBIA Developer Command Prompt `cobiaregister PATH-TO-MODULE`
